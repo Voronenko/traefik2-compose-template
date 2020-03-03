@@ -1,0 +1,8 @@
+# Uncomment block if you have placed your certs under /certs
+#[[tls.certificates]] #first certificate
+#   certFile = "/certs/fullchain.pem"
+#   keyFile = "/certs/privkey.pem"
+
+#[[tls.certificates]] #second certificate
+#   certFile = "/path/to/other.cert"
+#   keyFile = "/path/to/other.key"

@@ -1,0 +1,20 @@
+version: '3.4'
+services:
+  whoami2:
+    image: "containous/whoami"
+#    container_name: "simple-service2"
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.whoami2-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.whoami2-http.entrypoints=web"
+      - "traefik.http.routers.whoami2-http.rule=Host(`whoami2.lvh.voronenko.net`)"
+      - "traefik.http.routers.whoami2-http.middlewares=whoami2-https@docker"
+      - "traefik.http.routers.whoami2.entrypoints=websecure"
+      - "traefik.http.routers.whoami2.rule=Host(`whoami2.lvh.voronenko.net`)"
+      - "traefik.http.routers.whoami2.tls=true"
+      - "traefik.http.routers.whoami2.tls.certresolver=default"
+networks:
+  traefik-public:
+    external: true
