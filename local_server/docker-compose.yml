@@ -3,9 +3,11 @@ services:
   traefik:
     image: traefik:v2.1.4
     ports:
-      - 880:80
-      - 8443:443
-      - 8880:8080
+      - 80:80
+      - 443:443
+      - 8080:8080
+#      - 5432:5432
+#      - 27017:27017
     deploy:
       replicas: 1
       placement:
@@ -29,6 +31,8 @@ services:
       - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.mongo.address=:27017"
+      - "--entrypoints.postgres.address=:5432"
       - "--log.level=DEBUG"
       - "--accessLog"
       - "--api"
@@ -36,8 +40,13 @@ services:
       - "--metrics.prometheus"
       - "--providers.docker.network=traefik-public"
     networks:
-     - default
-     - traefik-public
+      - default
+      - traefik-public
+#    labels:
+#      - 'traefik.http.routers.http-catchall.rule: "hostregexp(`{host:.+}`)"'
+#      - 'traefik.http.routers.http-catchall.entrypoints: "web"'
+#      - 'traefik.http.routers.http-catchall.middlewares: "redirect-to-https@docker"'
+#      - 'traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: "https"'
   whoami:
     image: "containous/whoami"
     container_name: "simple-service"
@@ -54,6 +63,24 @@ services:
       - "traefik.http.routers.traefik-secure.rule=Host(`whoami.lvh.voronenko.net`)"
 #      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
       - "traefik.http.routers.traefik-secure.tls=true"
+  portainer:
+    image: portainer/portainer
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`docker.lvh.voronenko.net`)"
+      - "traefik.http.routers.portainer.entrypoints=web"
+      - "traefik.http.routers.portainer-secure.rule=Host(`docker.lvh.voronenko.net`)"
+      - "traefik.http.routers.portainer-secure.entrypoints=websecure"
+      - "traefik.http.routers.portainer-secure.tls=true"
+      # Uncomment this label if your Traefik instance is using a specific Docker network and replace the network name 
+      # This is not necessary if you set your default network in Traefik config/parameters
+      # - "traefik.docker.network=your-traefik-network-name"
+volumes:
+  portainer_data:
 networks:
   traefik-public:
     external: true
