@@ -5,7 +5,7 @@ services:
     ports:
       - 80:80
       - 443:443
-      - 8080:8080
+#      - 8080:8080
 #      - 5432:5432
 #      - 27017:27017
     deploy:
@@ -42,11 +42,17 @@ services:
     networks:
       - default
       - traefik-public
-#    labels:
-#      - 'traefik.http.routers.http-catchall.rule: "hostregexp(`{host:.+}`)"'
-#      - 'traefik.http.routers.http-catchall.entrypoints: "web"'
-#      - 'traefik.http.routers.http-catchall.middlewares: "redirect-to-https@docker"'
-#      - 'traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: "https"'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.lvh.voronenko.net`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencryptresolver"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls=true"
+#      - "traefik.http.routers.traefik.tls.certresolver=letsencryptresolver"
+#      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$8EVjn/nj$$GiLUZqcbueT
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
   whoami:
     image: "containous/whoami"
     container_name: "simple-service"
