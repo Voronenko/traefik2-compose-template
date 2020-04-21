@@ -53,7 +53,7 @@ Now, when we have discussed components, let's combine them together:
 
 ## Local setup - instance wide traefik setup for local development
 
-![alt](docs/structure.png)
+![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/structure.png)
 
 We need:
 
@@ -174,10 +174,10 @@ On a that moment, if you start the setup, i.e. `docker-compose up -d`, you alrea
 a) traefikUI at https://traefik.lvh.voronenko.net/ - not to much to change, but a nice bird eye view
 on currently detected services. Note, that page is served on a nice grean seal certificate you configured.
 
-![alt](docs/traefikui.png)
+![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/traefikui.png)
 
 b) PortainerUI at https://docker.lvh.voronenko.net/
-![alt](docs/portainer.png) which provides detailed insides
+![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/portainer.png) which provides detailed insides
 in docker running on your machine, containers, services and et cetera.
 
 
@@ -222,14 +222,14 @@ networks:
 
 Your service(s) get exposed on a dedicated names, serving on a green seal certificates - almost identical copy of your production environment.
 
-![alt](docs/whoami.png)
+![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/whoami.png)
 
 
 ## Installing setup on a public server
 
 Instance wide traefik setup for remote development (branch deploys, etc) is done in a similar way, but you would need to protect better your intellectual property (saying you do not want anyone on a web to preview your branch deployes) as well as protect portainer and traefik dashboards with credentials or even fully remove them from public access.
 
-![alt](docs/middleware.png)
+![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/middleware.png)
 
 Traefik has multiple middlewares to choose from  https://docs.traefik.io/middlewares/overview/
 
@@ -306,7 +306,7 @@ Full example for service exposed:
 
 ## Summary
 
-With described approach you are able to provide unobtrusive local development with traefik2, docker and letsencrypt for all your teammates. Startup owners are able to enforce "branded" development environment, like `app.lvh.mystartup.domain`
+With described approach you are able to provide unobtrusive local development with traefik2, docker and letsencrypt individually as well as for all your teammates. Startup owners are able to enforce "branded" development environment, like `app.lvh.mystartup.domain`
 
 You can easily able to extend approach to public server, implementing "preview server" for the same components. Traefik and docker allow you possibility also to introduce pull request previews in a reasonable time (in a day)
 
