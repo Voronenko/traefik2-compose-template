@@ -11,27 +11,19 @@ services:
       - 80:80
       - 443:443
       - 8080:8080
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-        preferences:
-          - spread: node.id
-      labels: []
-#        - "traefik.http.routers.traefik.rule=(Host(`<DOMAIN>`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`)))"
-#        - "traefik.http.routers.traefik.service=api@internal"
-#        - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
-#        - "traefik.http.routers.traefik.entrypoints=websecure"
-#        - "traefik.http.routers.traefik.middlewares=dashboardauth"
-#        - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:<TRAEFIK_DASHBOARD_ADMIN_PASSWORD>"
-# # Redirect all HTTP to HTTPS permanently
-#        - traefik.http.routers.http_catchall.rule=HostRegexp(`{any:.+}`)
-#        - traefik.http.routers.http_catchall.entrypoints=web
-#        - traefik.http.routers.http_catchall.middlewares=https_redirect
-#        - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
-#        - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true
-
+    labels:
+        - "traefik.http.routers.traefik.rule=(Host(`<DOMAIN>`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`)))"
+        - "traefik.http.routers.traefik.service=api@internal"
+        - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.traefik.entrypoints=websecure"
+        - "traefik.http.routers.traefik.middlewares=dashboardauth"
+        - "traefik.http.middlewares.dashboardauth.basicauth.users=admin:<TRAEFIK_DASHBOARD_ADMIN_PASSWORD>"
+ # Redirect all HTTP to HTTPS permanently
+        - traefik.http.routers.http_catchall.rule=HostRegexp(`{any:.+}`)
+        - traefik.http.routers.http_catchall.entrypoints=web
+        - traefik.http.routers.http_catchall.middlewares=https_redirect
+        - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik_certs:/certs
@@ -69,17 +61,15 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=Host(`whoami.preview.voronenko.net`)"
       - "traefik.http.routers.whoami.entrypoints=web"
-
+#      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
-
       - "traefik.http.routers.traefik-secure.entrypoints=websecure"
       - "traefik.http.routers.traefik-secure.rule=Host(`whoami.preview.voronenko.net`)"
-#      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
       - "traefik.http.routers.traefik-secure.tls=true"
-      - traefik.http.routers.whoami.tls.certresolver=letsencrypt
       - traefik.http.middlewares.whoami.compress=true
+      - traefik.http.routers.whoami.tls.certresolver=letsencrypt
 networks:
   traefik-public:
     external: true
