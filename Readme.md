@@ -308,6 +308,8 @@ Full example for service exposed:
 
 With described approach you are able to provide unobtrusive local development with traefik2, docker and letsencrypt individually as well as for all your teammates. Startup owners are able to enforce "branded" development environment, like `app.lvh.mystartup.domain`
 
+Solution is universal, and works nicely with multiple projects, including standalone tools distributed as docker container.
+
 You can easily able to extend approach to public server, implementing "preview server" for the same components. Traefik and docker allow you possibility also to introduce pull request previews in a reasonable time (in a day)
 
 Mentioned in article examples can be tried at https://github.com/Voronenko/traefik2-compose-template
