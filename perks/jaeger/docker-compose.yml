@@ -1,0 +1,30 @@
+version: '3.7'
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+    networks:
+      - jaeger-app
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jaeger.rule=Host(`jaeger.k.voronenko.net`)"
+      - "traefik.http.routers.jaeger.entrypoints=web"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.services.jaeger-secure.loadbalancer.server.port=16686"
+      - "traefik.http.routers.jaeger-secure.entrypoints=websecure"
+      - "traefik.http.routers.jaeger-secure.rule=Host(`jaeger.k.voronenko.net`)"
+#      - "traefik.http.routers.jaeger-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.jaeger-secure.tls=true"
+
+networks:
+  jaeger-app:
+  traefik-public:
+    external: true
+
