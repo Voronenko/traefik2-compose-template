@@ -1,0 +1,49 @@
+version: "3.7"
+
+volumes:
+    loki_data: {}
+
+services:
+  loki:
+    image: grafana/loki:1.5.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/:/etc/loki/
+      - loki_data:/tmp/loki/
+    restart: always
+    command: -config.file=/etc/loki/loki-config.yaml
+    networks:
+      - loki
+      - traefik-public 
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.loki.rule=Host(`loki.k.voronenko.net`)"
+      - "traefik.http.routers.loki.entrypoints=web"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.services.loki-secure.loadbalancer.server.port=3100"
+      - "traefik.http.routers.loki-secure.entrypoints=websecure"
+      - "traefik.http.routers.loki-secure.rule=Host(`loki.k.voronenko.net`)"
+#      - "traefik.http.routers.loki-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.loki-secure.tls=true"
+
+
+#  promtail:
+#    image: grafana/promtail:1.5.0
+#    volumes:
+#      - /var/log:/var/log
+#      - ./promtail/:/etc/promtail/
+#
+#    command: -config.file=/etc/promtail/promtail-config.yaml
+#    networks:
+#      - loki
+
+networks:
+  loki:
+  traefik-public:
+    external: true
+

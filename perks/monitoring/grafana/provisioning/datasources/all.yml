@@ -18,3 +18,10 @@ datasources:
   is_default: true
   version: 1
   editable: true
+- name: 'Loki'
+  type: 'loki'
+  access: 'proxy'
+  org_id: 1
+  url: http://loki.k.voronenko.net:3100
+  editable: true
+  version: 1
