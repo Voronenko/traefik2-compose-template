@@ -1,0 +1,106 @@
+global:
+  # The smarthost and SMTP sender used for mail notifications.
+  smtp_smarthost: 'smtp.gmail.com:587'
+#  smtp_from: 'emailaddress@'
+#  smtp_auth_username: 'emailaddress@'
+#  smtp_auth_password: 'password'
+  # The auth token for Hipchat.
+#  hipchat_auth_token: '1234556789'
+  # Alternative host for Hipchat.
+#  hipchat_api_url: 'https://hipchat.foobar.org/'
+
+templates:
+  - '/etc/prometheus_alertmanager/template/*.tmpl'
+
+# The root route on which each incoming alert enters.
+route:
+  # The labels by which incoming alerts are grouped together. For example,
+  # multiple alerts coming in for cluster=A and alertname=LatencyHigh would
+  # be batched into a single group.
+  group_by: ['alertname', 'cluster', 'service']
+
+  # When a new group of alerts is created by an incoming alert, wait at
+  # least 'group_wait' to send the initial notification.
+  # This way ensures that you get multiple alerts for the same group that start
+  # firing shortly after another are batched together on the first
+  # notification.
+  group_wait: 30s
+
+  # When the first notification was sent, wait 'group_interval' to send a batch
+  # of new alerts that started firing for that group.
+  group_interval: 5m
+
+  # If an alert has successfully been sent, wait 'repeat_interval' to
+  # resend them.
+  repeat_interval: 3h
+
+  # A default receiver
+  receiver: slack-channel
+
+  # All the above attributes are inherited by all child routes and can
+  # overwritten on each.
+
+  # The child route trees.                                                                                                                                                                                 [20/177]
+  routes:
+    # This routes performs a regular expression match on alert labels to
+    # catch alerts that are related to a list of services.
+    - match_re:
+        service: ^(foo1|foo2|baz)$
+      receiver: slack-channel
+      # The service has a sub-route for critical alerts, any alerts
+      # that do not match, i.e. severity != critical, fall-back to the
+      # parent node and are sent to 'team-X-mails'
+      routes:
+        - match:
+            severity: critical
+          receiver: slack-channel
+    - match:
+        service: files
+      receiver: slack-channel
+
+      routes:
+        - match:
+            severity: critical
+          receiver: slack-channel
+
+    # This route handles all alerts coming from a database service. If there's
+    # no team to handle it, it defaults to the DB team.
+    - match:
+        service: database
+      receiver: slack-channel
+      # Also group alerts by affected database.
+      group_by: [alertname, cluster, database]
+      routes:
+        - match:
+            owner: team-X
+          receiver: slack-channel
+        - match:
+            owner: team-Y
+          receiver: slack-channel
+
+
+# Inhibition rules allow to mute a set of alerts given that another alert is
+# firing.
+# We use this to mute any warning-level notifications if the same alert is
+# already critical.
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    # Apply inhibition if the alertname is the same.
+    equal: ['alertname', 'cluster', 'service']
+
+
+receivers:
+  - name: slack-channel
+#    email_configs:
+#      - to: voronenko@gmail.com
+#      - to: youremail
+    slack_configs:
+      - channel: #notifications
+        send_resolved: true
+        api_url: https://hooks.slack.com/services/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
+        icon_url: https://avatars3.githubusercontent.com/u/4029521
+        title: '{{ template "custom_title" . }}'
+        text: '{{ template "custom_slack_message" . }}'
