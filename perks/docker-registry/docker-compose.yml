@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  registry-srv:
+    image: registry:latest
+    restart: always
+    ports:
+      - 5000:5000
+    networks:
+      - joxit-app
+      - traefik-public
+    volumes:
+      - ./registry/storage:/var/lib/registry
+      - ./registry/config.yml:/etc/docker/registry/config.yml:ro
+  registry-ui:
+    image: joxit/docker-registry-ui:static
+    restart: always
+#    ports:
+#      - 8080:80
+    environment:
+      - REGISTRY_URL=http://registry-srv:5000
+      - DELETE_IMAGES=true
+    networks:
+      - joxit-app
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.joxit.rule=Host(`joxit.k.voronenko.net`)"
+      - "traefik.http.routers.joxit.entrypoints=web"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.services.joxit-secure.loadbalancer.server.port=80"
+      - "traefik.http.routers.joxit-secure.entrypoints=websecure"
+      - "traefik.http.routers.joxit-secure.rule=Host(`joxit.k.voronenko.net`)"
+#      - "traefik.http.routers.joxit-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.joxit-secure.tls=true"
+networks:
+  joxit-app:
+  traefik-public:
+    external: true

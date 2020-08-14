@@ -3,15 +3,15 @@
 When it comes to developing sites that use subdomains, this can be a challenging or boring task to set up in development because localhost isn’t a fully qualified domain name. You can’t just goto example.localhost. You either constantly edit /etc/hosts or setting up
 some dnsmasq in your local network.
 
-So far most often used solutions were http://lvh.me is a free service that resolves itself along with all subdomains to localhost,
+So far most often used solutions by myself were http://lvh.me - a free service that resolves itself along with all subdomains to localhost,
 and similar to it service nip.io which allows to code ip address to resolve into domain name 192-168-1-250.nip.io, and thus allowing to
 generate letsencrypt certificate to mentioned domain.
 
-This played good for a decade, but as more and more of mine clients were moving to pull request reviews and choosing docker or
-kubernetes in parallel, I found myself more and more limited with classic solutions above.
+This played good for a half of the decade, but as more and more of mine clients were moving to pull request reviews and choosing docker or
+kubernetes as a platform in parallel, I found myself more and more limited with classic solutions above.
 
 What I wanted last year - is reproducible scenario to implement own, branded local development environment that I can easily reproduce
-on a remote server to implement pull request reviews scenarios, supporting some reasonable perks like green seal certificates, some troubleshouting capabilities and so on.
+on a remote server to implement pull request reviews scenarios, supporting some reasonable perks like green seal certificates, some troubleshooting capabilities and so on.
 
 Let's take a look on a approach I am using now for clients using dockerized applications (either local or swarm)
 
@@ -21,14 +21,14 @@ Cooking components:
 
 a) docker - classic or in swarm mode. (On my work notebook I have docker in swarm mode, it does not stop it from be used as a standalone docker environment too)
 
-b) traefik2 , and it's official docker image. Traefik is an open-source Edge Router that makes publishing your services a fun and easy experience. It receives requests on behalf of your system and finds out which components are responsible for handling them. Kind of interest for me are two backends - docker and kubernetes.
+b) traefik2 , and it's official docker image. Traefik is an open-source edge router that makes publishing your services a fun and easy experience. It receives requests on behalf of your system and finds out which components are responsible for handling them. Kind of interest for me are two backends supported - docker and kubernetes.
 
 c) Development subdomain. For nicely working solution we need to dedicate some subdomain for development, for example: `*.lvh.voronenko.net` - resolving to localhost, or `*.preview.project.net` - some wildcard domain pointing to your staging server.
 
-d) Wildard certificate from letsencrypt to organize green seal certificate. Althouth on remote box traefik might take care on obtaining green seal certificate for each exposed fqdn for you,- if you have possibility to pre-generate wildcard certificate - why not?
+d) Wildcard certificate from letsencrypt to organize green seal certificate. Although on remote box traefik might take care on obtaining green seal certificate for each exposed fqdn for you, if you have possibility to pregenerate wildcard certificate - why not?
 For domain resolving to localhost, like mentioned `*.lvh.voronenko.net` - you need to take care of certificate on your own.
 
-For generating letsencrypt certificates my current tool of choice - is acme.sh - shell zero dependency tool. It supports number of dns providers, and generating wildcard certifate might be as simple as running short shell command. 
+For generating letsencrypt certificates my current tool of choice - is acme.sh - shell zero dependency tool. It supports number of dns providers, and generating wildcard certificate might be as simple as running short shell command.
 
 ```sh
 
@@ -45,7 +45,7 @@ Installing certificates into necessary folder also is as simple as executing she
         --fullchain-file $TARGET/fullchain.pem
 ```
 
-In worse case scenario (if you haven't instructed acme.sh with a command what to do on certificate prolongation) - you would need tp tale care on copying new set of certs once in 93 days.
+In worse case scenario (if you haven't instructed acme.sh with a command what to do on certificate prolongation) - you would need to take care on copying new set of certs once in 93 days.
 
 e) Some tool you can inspect what happens with docker. There are many good console tools, but if you like one with web ui - portainer is definitely one of the best.
 
@@ -57,7 +57,7 @@ Now, when we have discussed components, let's combine them together:
 
 We need:
 
-`traefik_certs` folder, where we would store pre-generated wildcard certificate (you might have more than one) also here traefik will store information about own certificates.
+`traefik_certs` folder, where we would store pregenerated wildcard certificate (you might have more than one) also here traefik will store information about own certificates.
 
 `traefik_conf` folder, where we would store parts of the traefik configuration we want to exclude from docker-compose.
 
@@ -181,7 +181,7 @@ b) PortainerUI at https://docker.lvh.voronenko.net/
 in docker running on your machine, containers, services and et cetera.
 
 
-Note that traefik docker-compose is fully independent component of your system without direct relation to any project you are currently worked on. This means that it can be constantly running on your host, like any other webserver.
+Note that traefik docker-compose is fully independent component of your system without direct relation to any project you are currently worked on. This means that it can be constantly running on your host, like any other web-server.
 
 At a moment when you need to expose some docker project you are currently working on to a traefik, you would need
 
@@ -227,7 +227,7 @@ Your service(s) get exposed on a dedicated names, serving on a green seal certif
 
 ## Installing setup on a public server
 
-Instance wide traefik setup for remote development (branch deploys, etc) is done in a similar way, but you would need to protect better your intellectual property (saying you do not want anyone on a web to preview your branch deployes) as well as protect portainer and traefik dashboards with credentials or even fully remove them from public access.
+Instance wide traefik setup for remote development (branch deploys, etc) is done in a similar way, but you would need to protect better your intellectual property (saying you do not want anyone on a web to preview your branch deploys) as well as protect portainer and traefik dashboards with credentials or even fully remove them from public access.
 
 ![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/middleware.png)
 
@@ -243,7 +243,7 @@ IPWhiteList https://docs.traefik.io/middlewares/ipwhitelist/
 
 RateLimit   https://docs.traefik.io/middlewares/ratelimit/
 
-also for a public server traefik will take care on a generating grean seal certificates for you, if you haven't provided pregenerated wildcard certificate.
+also for a public server traefik will take care on a generating green seal certificates for you, if you haven't provided pregenerated wildcard certificate.
 
 Also changes to the `local_server` setup would be activating letsencrypt certificates provider
 We introduce new mapped letsencrypt folder to store automatically retrieved certificates.
@@ -257,7 +257,7 @@ We introduce new mapped letsencrypt folder to store automatically retrieved cert
       - ./letsencrypt:/letsencrypt
 ```
 
-and we additionally activate letsencrypt acme provider in traefik
+and we additionally have to activate letsencrypt acme provider in traefik
 
 ```yaml
 labels:
@@ -268,18 +268,17 @@ labels:
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
 ```
 
-Althouth I recommend at least for host serving as branch deploys preview, pregenerate wild card certificate.
-It is quite useless to generate new certificate per very new branch deployed (branchname.preview.voronenko.net)
+However, I recommend at least for host serving as branch deploys preview, pregenerate wild card certificate.
+It is quite useless to generate new certificate per every new branch deployed (branchname.preview.voronenko.net)
 
-For services exposed through traefik, requiring automatic certificate from letsencrypt, you would need instruct traefik 
-to use letsencrypt.
+For services exposed through traefik, requiring automatic certificate from letsencrypt, you would need to instruct traefik to use letsencrypt for that service.
 
 ```yaml
 labels:
       - traefik.http.routers.whoami.tls.certresolver=letsencrypt
 ```
 
-Full example for service exposed:
+Full example for the service exposed:
 
 ```yaml
 
