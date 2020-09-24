@@ -1,7 +1,7 @@
 version: '3.4'
 services:
   traefik:
-    image: traefik:v2.1.4
+    image: traefik:v2.3.0
     ports:
       - 80:80
       - 443:443
@@ -70,13 +70,17 @@ services:
 #      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
       - "traefik.http.routers.traefik-secure.tls=true"
   portainer:
-    image: portainer/portainer
+    image: portainer/portainer-ce:2.0.0
     restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+#    ports:
+#      - 8000:8000
+#      - 9000:9000
     labels:
       - "traefik.enable=true"
+      - "traefik.http.services.portainer-secure.loadbalancer.server.port=9000"
       - "traefik.http.routers.portainer.rule=Host(`docker.lvh.voronenko.net`)"
       - "traefik.http.routers.portainer.entrypoints=web"
       - "traefik.http.routers.portainer-secure.rule=Host(`docker.lvh.voronenko.net`)"
