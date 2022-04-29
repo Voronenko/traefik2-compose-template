@@ -1,0 +1,61 @@
+version: "3.7"
+
+volumes:
+    cachet_data: {}
+    pg_data: {}
+
+services:
+  db:
+    image: "postgres:13"
+    restart: unless-stopped
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=statuspage
+      - POSTGRES_PASSWORD=statuspage
+      - POSTGRES_DB=statuspage
+    networks:
+      - cachet
+  cachet:
+#    image: cachethq/docker:2.3.18
+    image: voronenko/cachethq:2.3.18
+    restart: unless-stopped
+    networks:
+      - cachet
+      - traefik-public
+    environment:
+      -  DB_DRIVER=pgsql
+      -  DB_HOST=db
+      -  DB_PORT=5432
+      -  DB_DATABASE=statuspage
+      -  APP_DEBUG=true
+      -  APP_KEY="base64:sXwj91YqHuc4vATNN0/9hMgCfWv8lfjRE3eMd7gtYFw="
+      -  DB_PASSWORD=statuspage
+      -  DB_USERNAME=statuspage
+#      - MAIL_USERNAME=
+#      - MAIL_PASSWORD=
+#      - MAIL_DRIVER=
+#      - MAIL_HOST=
+#      - MAIL_PORT=
+#      - MAIL_ADDRESS=
+#      - MAIL_NAME=
+#      - MAIL_ENCRYPTION=
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cachet.rule=Host(`cachet.lvh.voronenko.net`)"
+      - "traefik.http.routers.cachet.entrypoints=web"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.services.cachet-secure.loadbalancer.server.port=8000"
+      - "traefik.http.routers.cachet-secure.entrypoints=websecure"
+      - "traefik.http.routers.cachet-secure.rule=Host(`cachet.lvh.voronenko.net`)"
+#      - "traefik.http.routers.loki-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.cachet-secure.tls=true"
+
+networks:
+  cachet:
+  traefik-public:
+    external: true
