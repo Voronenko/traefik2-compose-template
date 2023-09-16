@@ -1,0 +1,129 @@
+version: "3.7"
+x-sonarqube-labels: &sonarqube-labels
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.services.sonar.loadbalancer.server.port=9000"
+    - "traefik.http.routers.sonar.entrypoints=websecure"
+    - "traefik.http.routers.sonar.rule=Host(`sonar.lvh.voronenko.net`)"
+    - "traefik.http.routers.sonar.tls=true"
+# Reuse example https://yaml.org/type/merge.html
+# <<: *sonarqube-labels
+# ? "traefik.enable=false"
+services:
+  sonarqube:
+    image: sonarqube:community
+    hostname: sonarqube
+    container_name: sonarqube
+    networks:
+      traefik-public:
+      sonar-network:
+    depends_on:
+      - db
+      # - search-1
+      # - search-2
+      # - search-3
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_WEB_PORT: 9000
+      # SONAR_CLUSTER_SEARCH_HOSTS: "search-1,search-2,search-3"
+      # SONAR_CLUSTER_HOSTS: "sonarqube"
+      # SONAR_AUTH_JWTBASE64HS256SECRET: "dZ0EB0KxnF++nr5+4vfTCaun/eWbv6gOoXodiAMqcFo="
+      # VIRTUAL_HOST: sonarqube.dev.local
+      VIRTUAL_PORT: 9000
+    <<: *sonarqube-labels
+    deploy:
+          <<: *sonarqube-labels
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+#    ports:
+#      - "9000:9000"
+  db:
+    image: postgres:13
+    hostname: postgresql
+    container_name: postgresql
+    networks:
+      sonar-network:
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+  # search-1:
+  #   image: sonarqube:datacenter-search
+  #   hostname: "search-1"
+  #   cpus: 0.5
+  #   mem_limit: 4096M
+  #   mem_reservation: 1024M
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - sonar-network
+  #   environment:
+  #     SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+  #     SONAR_JDBC_USERNAME: sonar
+  #     SONAR_JDBC_PASSWORD: sonar
+  #     SONAR_CLUSTER_ES_HOSTS: "search-1,search-2,search-3"
+  #     SONAR_CLUSTER_NODE_NAME: "search-1"
+  #   volumes:
+  #     - search-data-1:/opt/sonarqube/data
+  # search-2:
+  #   image: sonarqube:datacenter-search
+  #   hostname: "search-2"
+  #   cpus: 0.5
+  #   mem_limit: 4096M
+  #   mem_reservation: 1024M
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - sonar-network
+  #   environment:
+  #     SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+  #     SONAR_JDBC_USERNAME: sonar
+  #     SONAR_JDBC_PASSWORD: sonar
+  #     SONAR_CLUSTER_ES_HOSTS: "search-1,search-2,search-3"
+  #     SONAR_CLUSTER_NODE_NAME: "search-2"
+  #   volumes:
+  #     - search-data-2:/opt/sonarqube/data
+  # search-3:
+  #   image: sonarqube:datacenter-search
+  #   hostname: "search-3"
+  #   cpus: 0.5
+  #   mem_limit: 4096M
+  #   mem_reservation: 1024M
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - sonar-network
+  #   environment:
+  #     SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+  #     SONAR_JDBC_USERNAME: sonar
+  #     SONAR_JDBC_PASSWORD: sonar
+  #     SONAR_CLUSTER_ES_HOSTS: "search-1,search-2,search-3"
+  #     SONAR_CLUSTER_NODE_NAME: "search-3"
+  #   volumes:
+  #     - search-data-3:/opt/sonarqube/data
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  postgresql:
+  postgresql_data:
+  search-data-1:
+  search-data-2:
+  search-data-3:
+
+networks:
+  traefik-public:
+     external: true
+  sonar-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.2.0/24

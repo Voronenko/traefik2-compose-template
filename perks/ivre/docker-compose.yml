@@ -1,0 +1,50 @@
+version: '3'
+services:
+  ivredb:
+    image: ivre/db
+    container_name: ivredb
+    networks:
+        - ivre
+    volumes:
+      - ./var_lib_mongodb:/var/lib/mongodb
+      - ./var_log_mongodb:/var/log/mongodb
+    restart: unless-stopped
+  ivreweb:
+    image: ivre/web
+    container_name: ivreweb
+    restart: unless-stopped
+    networks:
+        - ivre
+        - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ivre.rule=Host(`sec.lvh.voronenko.net`)"
+      - "traefik.http.routers.ivre.entrypoints=web"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.routers.ivre-secure.entrypoints=websecure"
+      - "traefik.http.routers.ivre-secure.rule=Host(`sec.lvh.voronenko.net`)"
+#      - "traefik.http.routers.grafana-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.ivre-secure.tls=true"
+
+    depends_on:
+      - ivredb
+  ivreclient:
+    image: ivre/client
+    container_name: ivreclient
+    networks:
+        - ivre
+    volumes:
+      - ./ivre-share:/ivre-share
+    depends_on:
+      - ivredb
+    stdin_open: true
+    tty: true
+networks:
+  ivre:
+  traefik-public:
+    external: true
+

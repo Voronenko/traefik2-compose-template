@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  loki-cloud:
+    image: grafana/promtail:main
+#    ports:
+#      - 3100:3100
+    volumes:
+      - /var/log:/var/log:ro
+      - ./promtail:/etc/promtail:rw
+    restart: unless-stopped
+networks:
+  traefik-public:
+    external: true

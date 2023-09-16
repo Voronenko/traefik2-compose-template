@@ -1,0 +1,48 @@
+version: '2.7'
+services:
+  borgsshd:
+    image: voronenko/nas-backup:latest
+#    network_mode: host
+    restart: always
+    read_only: false
+    volumes:
+    - type: volume
+      source: ssh_host_keys
+      target: /etc/ssh/host_keys_initial
+      read_only: false
+    - type: volume
+      source: repository
+      target: /repository
+      read_only: false
+    - type: tmpfs
+      target: /home/borg/.ssh # authorized_keys
+      tmpfs:
+        # nosuid,nodev,noexec added by default
+#        mode: '1777'
+        size: 16k
+    - type: tmpfs
+      # > FileNotFoundError: [Errno 2] No usable temporary directory found [...]
+      target: /tmp
+      tmpfs:
+#        mode: '1777'
+        size: 1M
+    ports:
+      - 2200:2200
+#    cap_drop: [ALL]
+#    security_opt: [no-new-privileges]
+    cpus: 0.8
+    mem_limit: 128M
+
+volumes:
+  ssh_host_keys:
+  repository:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /share/appsdata/borgbackup
+  ssh_host_keys:
+    driver_opts:
+      o: bind
+      type: none
+      device: /share/appsdata/borgbackup/config

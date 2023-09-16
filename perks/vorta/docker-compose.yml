@@ -1,0 +1,21 @@
+version: "3.4"
+services:
+  vorta:
+    image: voronenko/vorta:latest
+    container_name: vorta
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    privileged: true
+    environment:
+       - TZ=Europe/Warsaw
+       - USER_ID=1000
+       - GROUP_ID=100
+    volumes:
+      - ./config:/config
+      - /share/data:/home/app/locations/data:ro
+      - /share/Public:/home/app/locations/Public:ro
+    ports:
+      - 5800:5800
+    restart: unless-stopped

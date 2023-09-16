@@ -1,0 +1,84 @@
+version: '3.4'
+services:
+  db:
+    image: postgres:9.5
+    environment:
+      POSTGRES_DB: ${KONG_PG_DATABASE:-kong}
+      POSTGRES_PASSWORD: ${KONG_PG_PASSWORD:-kong}
+      POSTGRES_USER: ${KONG_PG_USER:-kong}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${KONG_PG_USER:-kong}"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    restart: on-failure
+    stdin_open: true
+    tty: true
+    networks:
+      - kong-net
+    volumes:
+      - keyfiles_kong_data:/var/lib/postgresql/data
+
+  #######################################
+  # Konga database prepare
+  #######################################
+  konga-prepare:
+    image: pantsel/konga:latest
+    command: "-c prepare -a postgres -u postgresql://${KONG_PG_USER:-kong}:${KONG_PG_PASSWORD:-kong}@db:5432/${KONG_PG_DATABASE:-kong} && tail -f /dev/null"
+    environment:
+      DB_ADAPTER: postgres
+      DB_HOST: db
+      DB_USER: ${KONG_PG_USER:-kong}
+      DB_PASSWORD: ${KONG_PG_PASSWORD:-kong}
+      DB_DATABASE: ${KONG_PG_DATABASE:-kong}
+      NODE_ENV: production
+      KONGA_SEED_USER_DATA_SOURCE_FILE: /tmp/konga-bootstrsap/users.js
+      KONGA_SEED_KONG_NODE_DATA_SOURCE_FILE: /tmp/konga-bootstrsap/connections.js
+    volumes:
+      - ./konga:/tmp/konga-bootstrsap:ro
+    networks:
+      - kong-net
+    restart: on-failure
+  #######################################
+  # Konga: Kong GUI
+  #######################################
+  konga:
+    image: pantsel/konga:latest
+    restart: on-failure
+    networks:
+        - kong-net
+        - traefik-public
+    environment:
+      DB_ADAPTER: postgres
+      DB_HOST: db
+      DB_USER: ${KONG_PG_USER:-kong}
+      DB_PASSWORD: ${KONG_PG_PASSWORD:-kong}
+      DB_DATABASE: ${KONG_PG_DATABASE:-kong}
+      NODE_ENV: production
+      KONGA_SEED_USER_DATA_SOURCE_FILE: /tmp/konga-bootstrap/users.js
+      KONGA_SEED_KONG_NODE_DATA_SOURCE_FILE: /tmp/konga-bootstrsap/connections.js
+    volumes:
+      - ./konga:/tmp/konga-bootstrsap:ro
+#    ports:
+#      - "1337:1337"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.konga.rule=Host(`konga.lvh.voronenko.net`)"
+      - "traefik.http.routers.konga.entrypoints=web"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.routers.konga-secure.entrypoints=websecure"
+      - "traefik.http.routers.konga-secure.rule=Host(`konga.lvh.voronenko.net`)"
+#      - "traefik.http.routers.konga-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.konga-secure.tls=true"
+
+volumes:
+  keyfiles_kong_data: {}
+
+networks:
+  kong-net:
+  traefik-public:
+    external: true

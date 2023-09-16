@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+    ubooquity:
+        image: linuxserver/ubooquity
+        container_name: ubooquity
+        restart: always
+        ports:
+            - 2202:2202
+            - 2203:2203
+        volumes:
+            - ./config:/config
+            - /share/data/books/calibre/CALIBRE:/books
+            - /share/data/books/comics:/comics
+        environment:
+           PUID: 1000
+           PGID: 1000
+           TZ: Europe/Kyiv
+           MAXMEM: 2048
+        networks:
+           traefik-public:
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.ubooquity.rule=Host(`books.fiks.im`)"
+          - "traefik.http.routers.ubooquity.entrypoints=web"
+          - "traefik.http.services.ubooquity.loadbalancer.server.port=2202"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+          - "traefik.http.routers.ubooquity-secure.entrypoints=websecure"
+          - "traefik.http.routers.ubooquity-secure.rule=Host(`books.fiks.im`)"
+#      - "traefik.http.routers.ubooquity-secure.middlewares=traefik-auth"
+          - "traefik.http.routers.ubooquity-secure.tls=true"
+
+networks:
+  traefik-public:
+    external: true

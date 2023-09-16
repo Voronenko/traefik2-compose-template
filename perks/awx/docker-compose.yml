@@ -1,0 +1,102 @@
+version: '2'
+services:
+
+  web:
+    image: ansible/awx_web:11.1.0
+    container_name: awx_web
+    depends_on:
+      - redis
+      - memcached
+      - postgres
+    ports:
+      - "8052:8052"
+    hostname: awxweb
+    user: root
+    restart: unless-stopped
+    volumes:
+      - /home/slavko/awx/supervisor-socket:/var/run/supervisor
+      - /home/slavko/awx/rsyslog-socket:/var/run/awx-rsyslog/
+      - /home/slavko/awx/rsyslog-config:/var/lib/awx/rsyslog/
+      - "$PWD/SECRET_KEY:/etc/tower/SECRET_KEY"
+      - "$PWD/environment.sh:/etc/tower/conf.d/environment.sh"
+      - "$PWD/credentials.py:/etc/tower/conf.d/credentials.py"
+      - "$PWD/nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "/home/slavko/awx/redis_socket:/var/run/redis/:rw"
+      - "/home/slavko/awx/memcached_socket:/var/run/memcached/:rw"
+      - "/home/slavko/awx/projects:/var/lib/awx/projects:rw"
+    environment:
+      http_proxy:
+      https_proxy:
+      no_proxy:
+
+  task:
+    image: ansible/awx_task:11.1.0
+    container_name: awx_task
+    depends_on:
+      - redis
+      - memcached
+      - web
+      - postgres
+    hostname: awx
+    user: root
+    restart: unless-stopped
+    volumes:
+      - /home/slavko/awx/supervisor-socket:/var/run/supervisor
+      - /home/slavko/awx/rsyslog-socket:/var/run/awx-rsyslog/
+      - /home/slavko/awx/rsyslog-config:/var/lib/awx/rsyslog/
+      - "$PWD/SECRET_KEY:/etc/tower/SECRET_KEY"
+      - "$PWD/environment.sh:/etc/tower/conf.d/environment.sh"
+      - "$PWD/credentials.py:/etc/tower/conf.d/credentials.py"
+      - "/home/slavko/awx/redis_socket:/var/run/redis/:rw"
+      - "/home/slavko/awx/memcached_socket:/var/run/memcached/:rw"
+      - "/home/slavko/awx/projects:/var/lib/awx/projects:rw"
+    environment:
+      http_proxy:
+      https_proxy:
+      no_proxy:
+      SUPERVISOR_WEB_CONFIG_PATH: '/supervisor.conf'
+
+  redis:
+    image: redis
+    container_name: awx_redis
+    restart: unless-stopped
+    environment:
+      http_proxy:
+      https_proxy:
+      no_proxy:
+    command: ["/usr/local/etc/redis/redis.conf"]
+    volumes:
+      - "$PWD/redis.conf:/usr/local/etc/redis/redis.conf:ro"
+      - "/home/slavko/awx/redis_socket:/var/run/redis/:rw"
+      - "/home/slavko/awx/memcached_socket:/var/run/memcached/:rw"
+
+  memcached:
+    image: "memcached:alpine"
+    container_name: awx_memcached
+    command: ["-s", "/var/run/memcached/memcached.sock", "-a", "0666"]
+    restart: unless-stopped
+    environment:
+      http_proxy:
+      https_proxy:
+      no_proxy:
+    volumes:
+      - "/home/slavko/awx/memcached_socket:/var/run/memcached/:rw"
+
+  postgres:
+    image: postgres:10
+    container_name: awx_postgres
+    restart: unless-stopped
+    volumes:
+      - /home/slavko/awx/data/10/data/:/var/lib/postgresql/data/pgdata:Z
+    environment:
+      POSTGRES_USER: awx
+      POSTGRES_PASSWORD: awxpass
+      POSTGRES_DB: awx
+      PGDATA: /var/lib/postgresql/data/pgdata
+      http_proxy:
+      https_proxy:
+      no_proxy:
+volumes:
+  supervisor-socket:
+  rsyslog-socket:
+  rsyslog-config:

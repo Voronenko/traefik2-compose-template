@@ -1,0 +1,63 @@
+version: "3.7"
+services:
+  metabase-db:
+    image: mysql:5.7
+    volumes:
+      - metabase_mysql_data:/var/lib/mysql
+    restart: unless-stopped
+#    ports:
+#      - "3307:3306"
+    networks:
+      - metabase
+    environment:
+      MYSQL_ROOT_PASSWORD: metabase
+      MYSQL_DATABASE: metabase
+      MYSQL_USER: metabase
+      MYSQL_PASSWORD: metabase
+  metabase-app:
+    image: softasap/metabase:202309141500
+    restart: unless-stopped
+#    ports:
+#      - 3001:3000
+    volumes:
+# declare your mount volume /host/dir:/container/dir
+    - metabase_data:/metabase-data
+    - ./csv:/csv
+    networks:
+      - metabase
+      - traefik-public
+    restart: unless-stopped
+    environment:
+      MB_DB_TYPE: mysql
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 3306
+      MB_DB_USER: metabase
+      MB_DB_PASS: metabase
+      MB_DB_HOST: metabase-db
+    depends_on:
+      - metabase-db
+    links:
+      - metabase-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.metabase.rule=Host(`mb.lvh.voronenko.net`)"
+      - "traefik.http.routers.metabase.entrypoints=web"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.routers.metabase-secure.entrypoints=websecure"
+      - "traefik.http.routers.metabase-secure.rule=Host(`mb.lvh.voronenko.net`)"
+#      - "traefik.http.routers.metabase-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.metabase-secure.tls=true"
+
+volumes:
+  metabase_mysql_data: {}
+  metabase_data: {}
+
+networks:
+  metabase:
+  traefik-public:
+    external: true
+

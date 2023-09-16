@@ -1,0 +1,47 @@
+version: "3.7"
+services:
+  calibre:
+    restart: always
+    image: lscr.io/linuxserver/calibre:6.4.0
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+    volumes:
+      - /share/data/books/calibre:/config
+      - /share/Public/BOOKS_INBOX/:/config/inbox
+    ports:
+      - 4080:8080
+      - 4081:8081
+    restart: always
+  cops:
+    image: lscr.io/linuxserver/cops:latest
+    container_name: cops
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+    volumes:
+      - ./config:/config
+      - /share/data/books/calibre/CALIBRE:/books
+    restart: always
+    networks:
+        traefik-public:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cops.rule=Host(`calibre.fiks.im`)"
+      - "traefik.http.routers.cops.entrypoints=web"
+      - "traefik.http.services.cops.loadbalancer.server.port=80"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.routers.cops-secure.entrypoints=websecure"
+      - "traefik.http.routers.cops-secure.rule=Host(`calibre.fiks.im`)"
+#      - "traefik.http.routers.cops-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.cops-secure.tls=true"
+
+networks:
+  traefik-public:
+    external: true

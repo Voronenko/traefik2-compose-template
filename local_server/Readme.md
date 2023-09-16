@@ -2,13 +2,13 @@
 
 to run `docker-compose up -d`
 
-once executed, on  http://traefik.lvh.voronenko.net:8880/  you can find dashboard.
+once executed, on  http://traefik.fiks.im:8880/  you can find dashboard.
 
-Take a look on example of  
+Take a look on example of 
 
-http://whoami.lvh.voronenko.net:880
+<http://whoami.fiks.im:880> (http endpoint on port 880) or <<http://whoami.fiks.im> (usual http port on 80)
 and
-https://whoami.lvh.voronenko.net:8443
+<https://whoami.fiks.im:8443> (https endpoint on port 8443) or <https://whoami.fiks.im> (usual https port on 443)
 
 
 Traefik serves only containers that share `traefik-public` docker network.
@@ -34,10 +34,10 @@ services:
       - "traefik.enable=true"
 #      - "traefik.http.middlewares.whoami2-https.redirectscheme.scheme=https"
       - "traefik.http.routers.whoami2-http.entrypoints=web"
-      - "traefik.http.routers.whoami2-http.rule=Host(`whoami2.lvh.voronenko.net`)"
+      - "traefik.http.routers.whoami2-http.rule=Host(`whoami2.fiks.im`)"
 #      - "traefik.http.routers.whoami2-http.middlewares=whoami2-https@docker"
       - "traefik.http.routers.whoami2.entrypoints=websecure"
-      - "traefik.http.routers.whoami2.rule=Host(`whoami2.lvh.voronenko.net`)"
+      - "traefik.http.routers.whoami2.rule=Host(`whoami2.fiks.im`)"
       - "traefik.http.routers.whoami2.tls=true"
       - "traefik.http.routers.whoami2.tls.certresolver=default"
 networks:

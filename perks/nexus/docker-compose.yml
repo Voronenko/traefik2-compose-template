@@ -1,0 +1,51 @@
+version: '3.4'
+services:
+  nexus:
+    container_name: nexus
+    image: sonatype/nexus3
+    restart: unless-stopped
+    environment:
+      - REGISTRY_HTTP_RELATIVEURLS=true
+      - TZ=Europe/Warsaw
+#    ports:
+#      - 8081:8081
+#      - 5000:5000
+    networks:
+      traefik-public:
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - nexus-data:/nexus-data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.nexus-secure.loadbalancer.server.port=8081"
+      - "traefik.http.routers.nexus-secure.service=nexus-secure"
+      - "traefik.http.routers.nexus-secure.entrypoints=websecure"
+      - "traefik.http.routers.nexus-secure.rule=Host(`nexus.fiks.im`)"
+      - "traefik.http.routers.nexus-secure.tls=true"
+     # Registry Endpoint
+      - "traefik.http.services.nexusregistry-secure.loadbalancer.server.port=5000"
+      - "traefik.http.routers.nexusregistry-secure.service=nexusregistry-secure"
+      - "traefik.http.routers.nexusregistry-secure.entrypoints=websecure"
+      - "traefik.http.routers.nexusregistry-secure.rule=Host(`registry.fiks.im`)"
+      - "traefik.http.routers.nexusregistry-secure.tls=true"
+
+      - "traefik.http.services.nexusregistry.loadbalancer.server.port=5000"
+      - "traefik.http.routers.nexusregistry.service=nexusregistry"
+      - "traefik.http.routers.nexusregistry.entrypoints=web"
+      - "traefik.http.routers.nexusregistry.rule=Host(`registry.fiks.im`)"
+
+
+volumes:
+  nexus-data:
+#    external: true
+
+#  nexus-data:
+#    driver: local
+#    driver_opts:
+#      type: nfs
+#      o: addr=192.168.86.12,rw
+#      device: ":/volume1/Docker/NexusData"
+
+networks:
+  traefik-public:
+    external: true

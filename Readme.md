@@ -23,10 +23,12 @@ a) docker - classic or in swarm mode. (On my work notebook I have docker in swar
 
 b) traefik2 , and it's official docker image. Traefik is an open-source edge router that makes publishing your services a fun and easy experience. It receives requests on behalf of your system and finds out which components are responsible for handling them. Kind of interest for me are two backends supported - docker and kubernetes.
 
-c) Development subdomain. For nicely working solution we need to dedicate some subdomain for development, for example: `*.lvh.voronenko.net` - resolving to localhost, or `*.preview.project.net` - some wildcard domain pointing to your staging server.
+c) Development subdomain. For nicely working solution we need to dedicate some subdomain for development, for example: `*.lvh.voronenko.net` - resolving to localhost, or `*.preview.project.net` - some wildcard domain pointing to your staging server. If you want branding neutral naming - you can use '*.fiks.im' as well.
 
 d) Wildcard certificate from letsencrypt to organize green seal certificate. Although on remote box traefik might take care on obtaining green seal certificate for each exposed fqdn for you, if you have possibility to pregenerate wildcard certificate - why not?
+
 For domain resolving to localhost, like mentioned `*.lvh.voronenko.net` - you need to take care of certificate on your own.
+New! If you want pre-generated grean seal certificates for local development - feel free to use `*.fiks.im` domain that resolves to localhost. Pregenerated certificates available at <https://github.com/Voronenko/fiks.im>, check for details
 
 For generating letsencrypt certificates my current tool of choice - is acme.sh - shell zero dependency tool. It supports number of dns providers, and generating wildcard certificate might be as simple as running short shell command.
 
@@ -55,6 +57,8 @@ Now, when we have discussed components, let's combine them together:
 
 ![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/structure.png)
 
+UPD: Now with branding neural domain - fiks.im (guaranteed until 2033) - pre-generated green seal certificates available. Check <https://github.com/Voronenko/fiks.im> for details.
+
 We need:
 
 `traefik_certs` folder, where we would store pregenerated wildcard certificate (you might have more than one) also here traefik will store information about own certificates.
@@ -78,7 +82,7 @@ Controlling `Makefile` which helps you to create shared public network for docke
 ```makefile
 
 create-traefik-network-once:
-        docker network create traefik-public
+        docker network create --attachable traefik-public
 up:
         docker-compose up -d
 down:
@@ -92,9 +96,9 @@ and heart of the construction: main traefik docker-compose file, in order to mak
 version: '3.4'
 services:
   traefik:
-    image: traefik:v2.1.4
+    image: traefik:v2.10.4
 # on my notebook traefik serves on default http https ports
-# this allows natural urls like https://app.lvh.voronenko.net/
+# this allows natural urls like https://app.fiks.im/
     ports:
       - 80:80
       - 443:443
@@ -127,8 +131,6 @@ services:
       - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.mongo.address=:27017"
-      - "--entrypoints.postgres.address=:5432"
       - "--log.level=DEBUG"
       - "--accessLog"
       - "--api"
@@ -139,16 +141,16 @@ services:
       - default
       - traefik-public
 # traefik configuration via labels
-# expose traefik dashboard under address https://traefik.lvh.voronenko.net
+# expose traefik dashboard under address https://traefik.fiks.im
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.lvh.voronenko.net`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.fiks.im`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencryptresolver"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.tls=true"
 # docker management UI to be exposed under
-# https://docker.lvh.voronenko.net
+# https://docker.fiks.im
   portainer:
     image: portainer/portainer
     restart: always
@@ -157,9 +159,9 @@ services:
       - portainer_data:/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=Host(`docker.lvh.voronenko.net`)"
+      - "traefik.http.routers.portainer.rule=Host(`docker.fiks.im`)"
       - "traefik.http.routers.portainer.entrypoints=web"
-      - "traefik.http.routers.portainer-secure.rule=Host(`docker.lvh.voronenko.net`)"
+      - "traefik.http.routers.portainer-secure.rule=Host(`docker.fiks.im`)"
       - "traefik.http.routers.portainer-secure.entrypoints=websecure"
       - "traefik.http.routers.portainer-secure.tls=true"
 volumes:
@@ -171,12 +173,12 @@ networks:
 
 On a that moment, if you start the setup, i.e. `docker-compose up -d`, you already will get:
 
-a) traefikUI at https://traefik.lvh.voronenko.net/ - not to much to change, but a nice bird eye view
+a) traefikUI at https://traefik.fiks.im/ - not to much to change, but a nice bird eye view
 on currently detected services. Note, that page is served on a nice grean seal certificate you configured.
 
 ![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/traefikui.png)
 
-b) PortainerUI at https://docker.lvh.voronenko.net/
+b) PortainerUI at https://docker.fiks.im/
 ![alt](https://github.com/Voronenko/traefik2-compose-template/raw/master/docs/portainer.png) which provides detailed insides
 in docker running on your machine, containers, services and et cetera.
 
@@ -187,7 +189,7 @@ At a moment when you need to expose some docker project you are currently workin
 
 a) add service exposed outside to the `traefik-public` network.
 
-b) specify discovery rules, like fqdn for the service - "Host(`whoami.lvh.voronenko.net`)"
+b) specify discovery rules, like fqdn for the service - "Host(`whoami.fiks.im`)"
 
 c) provide hints to traefik for any additional configuration,
 like redirections, authorization/password protection etc.
@@ -205,13 +207,13 @@ Once you launch such docker-compose in your project folder, it will immediately 
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.lvh.voronenko.net`)"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.fiks.im`)"
       - "traefik.http.routers.whoami.entrypoints=web"
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
       - "traefik.http.routers.traefik-secure.entrypoints=websecure"
-      - "traefik.http.routers.traefik-secure.rule=Host(`whoami.lvh.voronenko.net`)"
+      - "traefik.http.routers.traefik-secure.rule=Host(`whoami.fiks.im`)"
 #      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
       - "traefik.http.routers.traefik-secure.tls=true"
 networks:
@@ -313,7 +315,7 @@ You can easily able to extend approach to public server, implementing "preview s
 
 Mentioned in article examples can be tried at https://github.com/Voronenko/traefik2-compose-template
 
-`local_server` is the example of the development environment on your localhost, i.e. https://someapp.lvh.voronenko.net/
+`local_server` is the example of the development environment on your localhost, i.e. https://someapp.fiks.im/
 
 `public_server` is the example of the environment environment that can be deployed to the public server.
 
