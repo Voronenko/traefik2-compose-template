@@ -1,0 +1,110 @@
+version: "3.9"
+services:
+
+  ### Prefect Database
+  prefectdatabase:
+    image: postgres:15.2-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=prefect
+    networks:
+      - prefect
+    expose:
+      - 5432
+    volumes:
+      - prefectdb:/var/lib/postgresql/data
+    profiles: ["server"]
+
+  ### MinIO for flow storage
+  prefectminio:
+    image: minio/minio:latest
+    entrypoint: ["minio", "server", "--address", "0.0.0.0:9000", "--console-address", "0.0.0.0:9001", "/data"]
+    networks:
+      - prefect
+    volumes:
+      - "prefectminio:/data"
+    ports:
+      - 9000:9000
+      - 9001:9001
+    profiles: ["minio"]
+
+  ### Prefect Server API and UI
+  prefectserver:
+    image: prefecthq/prefect:2.18-python3.12-conda
+    restart: always
+    volumes:
+      - prefectserver:/root/.prefect
+    entrypoint: ["/opt/prefect/entrypoint.sh", "prefect", "server", "start"]
+    networks:
+      - prefect
+      - traefik-public
+    environment:
+      #- PREFECT_UI_URL=http://127.0.0.1:4200/api
+      #- PREFECT_API_URL=http://127.0.0.1:4200/api
+      # If you want to access Prefect Server UI from anywhere other than the Docker host machine, you will need to change
+      # PREFECT_UI_URL and PREFECT_API_URL to match the external hostname/IP of the host machine. For example:
+      - PREFECT_UI_URL=http://prefect.fiks.im/api
+      - PREFECT_API_URL=http://prefect.fiks.im/api
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://postgres:postgres@prefectdatabase:5432/prefect
+      # Uncomment the following line if you want to use the 'S3 Bucket' storage block instead of the older 'S3' storage
+      # - EXTRA_PIP_PACKAGES=prefect-aws
+    labels:
+       - "traefik.enable=true"
+       - "traefik.http.routers.prefecthq.rule=Host(`prefect.fiks.im`)"
+       - "traefik.http.routers.prefecthq.entrypoints=web"
+
+       - "traefik.http.services.prefecthq.loadbalancer.server.port=4200"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+       - "traefik.http.routers.prefecthq-secure.entrypoints=websecure"
+       - "traefik.http.routers.prefecthq-secure.rule=Host(`prefect.fiks.im`)"
+#      - "traefik.http.routers.prefecthq-secure.middlewares=traefik-auth"
+       - "traefik.http.routers.prefecthq-secure.tls=true"
+    ports:
+      - 4200:4200
+    depends_on:
+      - prefectdatabase
+    profiles: ["server"]
+
+  ## Prefect Agent
+  agent:
+    image: prefecthq/prefect:2.18-python3.12-conda
+    restart: always
+    entrypoint: ["/opt/prefect/entrypoint.sh", "prefect", "agent", "start", "-q", "YOUR_WORK_QUEUE_NAME"]
+    networks:
+      - prefect
+    environment:
+      - PREFECT_API_URL=http://prefectserver:4200/api
+#       Use PREFECT_API_KEY if connecting the agent to Prefect Cloud
+#     - PREFECT_API_KEY=YOUR_API_KEY
+    profiles: ["agent"]
+
+  ### Prefect CLI
+  cli:
+    image: prefecthq/prefect:2.11.5-python3.11
+    entrypoint: "bash"
+    working_dir: "/root/flows"
+    volumes:
+      - "./flows:/root/flows"
+    networks:
+      - prefect
+    environment:
+      - PREFECT_API_URL=http://server:4200/api
+#       Use PREFECT_API_KEY to use the CLI to interact with Prefect Cloud
+#     - PREFECT_API_KEY=YOUR_API_KEY
+    profiles: ["cli"]
+volumes:
+  prefectserver:
+  prefectdb:
+  prefectminio:
+networks:
+  prefect:
+  traefik-public:
+    external: true
+

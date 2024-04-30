@@ -1,0 +1,4 @@
+perks/airflow/config
+perks/airflow/dags
+perks/airflow/logs
+perks/airflow/plugins
