@@ -41,13 +41,10 @@ services:
 
       - "traefik.http.routers.freshrss-secure.entrypoints=websecure"
       - "traefik.http.routers.freshrss-secure.rule=Host(`rss.fiks.im`)"
-#      - "traefik.http.routers.bitwarden-secure.middlewares=traefik-auth"
+#      - "traefik.http.routers.freshrss-secure.middlewares=traefik-auth"
       - "traefik.http.routers.freshrss-secure.tls=true"
       - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
 
-#      - "com.centurylinklabs.watchtower.enable=true"
-#      # Ip filtering
-#      - "traefik.http.routers.bitwarden.middlewares=whitelist@file"
 networks:
   traefik-public:
     external: true
