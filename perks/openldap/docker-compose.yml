@@ -1,6 +1,6 @@
-version: '3.9'
+version: '3.7'
 services:
-  openldap:
+  ldap-server:
     image: osixia/openldap:1.5.0
     container_name: openldap
     environment:
@@ -35,9 +35,9 @@ services:
     networks:
       - openldap
     volumes:
-      - /var/lib/ldap
-      - /etc/ldap/slapd.d
-      - /container/service/slapd/assets/certs/
+      - openldap_var_lib:/var/lib/ldap
+      - openldap_slap_d:/etc/ldap/slapd.d
+      - openldap_certs:/container/service/slapd/assets/certs/
     ports:
       - "389:389"
       - "636:636"
@@ -46,7 +46,7 @@ services:
     # fully-qualified domain name for the host.
     domainname: "example.org"
     hostname: "ldap-server"
-  phpldapadmin:
+  ldap-server-admin:
     image: osixia/phpldapadmin:latest
     container_name: phpldapadmin
     networks:
@@ -74,6 +74,11 @@ services:
     #  - "8080:80"
     depends_on:
       - openldap
+
+volumes:
+  openldap_var_lib:
+  openldap_slap_d:
+  openldap_certs:
 
 networks:
   openldap:

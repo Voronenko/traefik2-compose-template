@@ -6,7 +6,12 @@ version: '3.4'
 
 services:
   traefik:
-    image: traefik:v2.10.4
+    image: traefik:v2.11.20
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://127.0.0.1/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     ports:
       - 80:80
       - 443:443
@@ -51,6 +56,9 @@ services:
       - "--certificatesResolvers.letsencrypt.acme.httpChallenge=true"
       - "--certificatesResolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+# monitoring
+      - "--ping=true"
+      - "--ping.entrypoint=web"
     networks:
      - default
      - traefik-public

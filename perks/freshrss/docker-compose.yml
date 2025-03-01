@@ -1,0 +1,53 @@
+services:
+  freshrss:
+    image: freshrss/freshrss:latest
+    # # Optional build section if you want to build the image locally:
+    # build:
+    #   # Pick #latest (slow releases) or #edge (rolling release) or a specific release like #1.21.0
+    #   context: https://github.com/FreshRSS/FreshRSS.git#latest
+    #   dockerfile: Docker/Dockerfile-Alpine
+    container_name: freshrss
+    hostname: freshrss
+    restart: unless-stopped
+    volumes:
+      - ./data:/var/www/FreshRSS/data
+      - ./extensions:/var/www/FreshRSS/extensions
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Kyiv
+      CRON_MIN: '3,33'
+      TRUSTED_PROXY: 172.16.0.1/12 192.168.0.1/16 192.168.0.2/16 192.168.0.3/16
+      FRESHRSS_DEFAULT_USER: admin
+      FRESHRSS_DEFAULT_PASSWORD: freshrss
+      FRESHRSS_API_ENABLED: "true"
+      FRESHRSS_SALT: "18dd21ac5472c670bbfc3532733cd479d42c3c48"
+    networks:
+        traefik-public:
+    healthcheck:
+      test: ["CMD", "php", "-r", "$$headers = get_headers('http://localhost/api/fever.php', 1); echo (strpos($$headers[0], '200') !== false) ? exit(0) : exit(1);"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.freshrss.rule=Host(`rss.fiks.im`)"
+      - "traefik.http.routers.freshrss.entrypoints=web"
+      - "traefik.http.services.freshrss.loadbalancer.server.port=80"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.routers.freshrss-secure.entrypoints=websecure"
+      - "traefik.http.routers.freshrss-secure.rule=Host(`rss.fiks.im`)"
+#      - "traefik.http.routers.bitwarden-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.freshrss-secure.tls=true"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+
+#      - "com.centurylinklabs.watchtower.enable=true"
+#      # Ip filtering
+#      - "traefik.http.routers.bitwarden.middlewares=whitelist@file"
+networks:
+  traefik-public:
+    external: true

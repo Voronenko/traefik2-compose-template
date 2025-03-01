@@ -1,7 +1,12 @@
 version: '3.4'
 services:
   traefik:
-    image: traefik:v2.3.0
+    image: traefik:v2.11.20
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://127.0.0.1/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     ports:
       - 80:80
       - 443:443
@@ -53,6 +58,9 @@ services:
 #      - "traefik.http.routers.traefik.middlewares=traefik-auth"
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$8EVjn/nj$$GiLUZqcbueT
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+# monitoring
+      - "--ping=true"
+      - "--ping.entrypoint=web"
   whoami:
     image: "containous/whoami"
     container_name: "simple-service"
