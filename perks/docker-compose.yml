@@ -1,0 +1,62 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    environment:
+      PUID: 1000 # optional, your user id
+      PGID: 1000 # optional, your group id
+    #ports:
+    #  - 3000:3000
+    volumes:
+      - ./config:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+        traefik-public:
+    extra_hosts:
+        docker.lvh.voronenko.net: 172.25.0.1
+        lvh.voronenko.net: 172.25.0.1
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost"]
+#      interval: 1m
+#      timeout: 10s
+#      retries: 3
+#      start_period: 20s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+        preferences:
+          - spread: node.id
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.hpage.rule=Host(`home.lvh.voronenko.net`,`home.me.voronenko.net`,`home.fiks.im`)"
+        - "traefik.http.routers.hpage.entrypoints=web"
+        - "traefik.http.services.hpage.loadbalancer.server.port=3000"
+
+  #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+  #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+  #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+        - "traefik.http.routers.hpage-secure.entrypoints=websecure"
+        - "traefik.http.routers.hpage-secure.rule=Host(`home.lvh.voronenko.net`,`home.me.voronenko.net`,`home.fiks.im`)"
+  #      - "traefik.http.routers.hpage-secure.middlewares=traefik-auth"
+        - "traefik.http.routers.hpage-secure.tls=true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hpage.rule=Host(`home.lvh.voronenko.net`,`home.me.voronenko.net`,`home.fiks.im`)"
+      - "traefik.http.routers.hpage.entrypoints=web"
+      - "traefik.http.services.hpage.loadbalancer.server.port=3000"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.routers.hpage-secure.entrypoints=websecure"
+      - "traefik.http.routers.hpage-secure.rule=Host(`home.lvh.voronenko.net`,`home.me.voronenko.net`,`home.fiks.im`)"
+#      - "traefik.http.routers.hpage-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.hpage-secure.tls=true"
+networks:
+  traefik-public:
+    external: true

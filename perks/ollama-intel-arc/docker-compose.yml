@@ -1,0 +1,54 @@
+version: '3'
+services:
+  ollama-intel-arc:
+    build: .
+    #image: ollama-intel-arc:latest
+    container_name: ollama-intel-arc
+    networks:
+        ollama:
+    restart: unless-stopped
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ollama-volume:/root/.ollama
+    ports:
+      - 11434:11434
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: open-webui
+    volumes:
+      - open-webui-volume:/app/backend/data
+    depends_on:
+      - ollama-intel-arc
+    networks:
+        traefik-public:
+        ollama:
+    environment:
+      - WEBUI_AUTH=False
+      - ENABLE_OPENAI_API=True
+      - ENABLE_OLLAMA_API=True
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ollama.rule=Host(`llmd.voronenko.net`,`llmd.voronenko.net`,`llmd.fiks.im`)"
+      - "traefik.http.routers.llm.entrypoints=web"
+      - "traefik.http.services.llm.loadbalancer.server.port=8080"
+
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      - "traefik.http.routers.llm-secure.entrypoints=websecure"
+      - "traefik.http.routers.llm-secure.rule=Host(`llmd.voronenko.net`,`llmd.voronenko.net`,`llmd.fiks.im`)"
+#      - "traefik.http.routers.llm-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.llm-secure.tls=true"
+    restart: unless-stopped
+
+volumes:
+  ollama-volume: {}
+  open-webui-volume: {}
+networks:
+  traefik-public:
+    external: true
+  ollama:

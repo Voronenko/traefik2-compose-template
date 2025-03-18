@@ -1,0 +1,34 @@
+services:
+  logseq_drawio:
+    image: jgraph/drawio
+    container_name: logseqdrawio
+    restart: always
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.drawio.rule=Host(`drawio.fiks.im`)"
+      - "traefik.http.routers.drawio.entrypoints=web"
+      - "traefik.http.routers.drawio_secure.rule=Host(`drawio.fiks.im`)"
+      - "traefik.http.routers.drawio_secure.entrypoints=websecure"
+      - "traefik.http.routers.drawio_secure.tls=true"
+      - "traefik.http.services.logseq_drawio.loadbalancer.server.port=8080"
+  logseq_plantuml:
+    image: plantuml/plantuml-server:tomcat
+    container_name: logseqplantuml
+    restart: always
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plantuml.rule=Host(`plantuml.fiks.im`)"
+      - "traefik.http.routers.plantuml.entrypoints=web"
+      - "traefik.http.routers.plantuml_secure.rule=Host(`plantuml.fiks.im`)"
+      - "traefik.http.routers.plantuml_secure.entrypoints=websecure"
+      - "traefik.http.routers.plantuml_secure.tls=true"
+      - "traefik.http.services.logseq_plantuml.loadbalancer.server.port=8080"
+
+
+networks:
+  traefik-public:
+    external: true
