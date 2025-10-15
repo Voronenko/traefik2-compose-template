@@ -1,0 +1,79 @@
+services:
+  label_studio_postgres:
+    image: postgres:17
+    container_name: labelstudio_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: labelstudio
+      POSTGRES_PASSWORD: labelstudio_pass
+      POSTGRES_DB: labelstudio
+      PGDATA: /data/postgres
+    healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -d postgres" ]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+    volumes:
+      - labelstudio_postgres_db:/data/postgres
+    networks:
+      - label-studio
+
+  label-studio:
+    image: heartexlabs/label-studio:latest
+    container_name: labelstudio_app
+    restart: unless-stopped
+    environment:
+      LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED: "true"
+      LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT: /label-studio/files
+      DJANGO_DB: default
+      POSTGRE_NAME: labelstudio
+      POSTGRE_USER: labelstudio
+      POSTGRE_PASSWORD: labelstudio_pass
+      POSTGRE_PORT: 5432
+      POSTGRE_HOST: label_studio_postgres
+
+      LABEL_STUDIO_USERNAME: admin
+      LABEL_STUDIO_PASSWORD: admin
+      LABEL_STUDIO_EMAIL: admin@fiks.im
+      LABEL_STUDIO_ALLOW_ORIGINS: '["https://label-studio.fiks.im"]'
+      LABEL_STUDIO_CSRF_TRUSTED_ORIGINS: https://label-studio.fiks.im
+      DEBUG: true
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    volumes:
+      - labelstudio_data:/label-studio/data
+      - ./labelstudio_files:/label-studio/files
+    depends_on:
+      - label_studio_postgres
+    networks:
+      - label-studio
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.labelstudio.rule=Host(`label-studio.fiks.im`)"
+      - "traefik.http.routers.labelstudio.entrypoints=websecure"
+      - "traefik.http.routers.labelstudio.tls.certresolver=myresolver"
+      - "traefik.http.services.labelstudio.loadbalancer.server.port=8080"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.labelstudio-insecure.rule=Host(`label-studio.fiks.im`)"
+      - "traefik.http.routers.labelstudio-insecure.entrypoints=web"
+      - "traefik.http.routers.labelstudio-insecure.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+networks:
+  label-studio:
+    name: label-studio
+  traefik-public:
+    external: true
+
+volumes:
+  labelstudio_data:
+    driver: local
+  labelstudio_postgres_db:
+    driver: local

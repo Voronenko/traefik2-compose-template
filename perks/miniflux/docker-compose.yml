@@ -1,0 +1,50 @@
+services:
+  miniflux:
+    image: miniflux/miniflux:latest
+    depends_on:
+      minifluxdb:
+        condition: service_healthy
+    networks:
+      miniflux:
+      traefik-public:
+    environment:
+      - DATABASE_URL=postgres://miniflux:secret@minifluxdb/miniflux?sslmode=disable
+      - RUN_MIGRATIONS=1
+      - CREATE_ADMIN=1
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=freshrss
+    healthcheck:
+      test: ["CMD", "/usr/bin/miniflux", "-healthcheck", "auto"]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.miniflux.rule=Host(`flux.fiks.im`)"
+      - "traefik.http.routers.miniflux.entrypoints=web"
+      - "traefik.http.services.miniflux.loadbalancer.server.port=8080"
+#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.miniflux-secure.entrypoints=websecure"
+      - "traefik.http.routers.miniflux-secure.rule=Host(`flux.fiks.im`)"
+#      - "traefik.http.routers.miniflux-secure.middlewares=traefik-auth"
+      - "traefik.http.routers.miniflux-secure.tls=true"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+  minifluxdb:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=miniflux
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=miniflux
+    networks:
+        miniflux:
+    volumes:
+      - miniflux-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "miniflux"]
+      interval: 10s
+      start_period: 30s
+volumes:
+  miniflux-db:
+networks:
+  traefik-public:
+    external: true
+  miniflux:

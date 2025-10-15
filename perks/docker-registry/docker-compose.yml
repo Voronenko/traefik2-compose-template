@@ -1,31 +1,62 @@
-version: '3.7'
-
 services:
-  registry-srv:
+  registry:
     image: registry:latest
+    container_name: docker_registry
     restart: always
+    volumes:
+      - ./registry_data:/data
+      - ./registry_auth:/auth
+      - ./registry/config.yml:/etc/docker/registry/config.yml:ro
     ports:
       - 5000:5000
+    environment:
+      #- REGISTRY_AUTH=htpasswd
+      #- REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm
+      #- REGISTRY_AUTH_HTPASSWD_PATH=/auth/.htpasswd
+      #- REGISTRY_LOG_LEVEL=debug
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin: '[https://registry-ui.fiks.im]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods: '[HEAD,GET,OPTIONS,DELETE]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Credentials: '[true]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Headers: '[Authorization,Accept,Cache-Control]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers: '[Docker-Content-Digest]'
+      REGISTRY_STORAGE_DELETE_ENABLED: 'true'
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.registry.entrypoints=web"
+      - "traefik.http.routers.registry.rule=Host(`registry.fiks.im`)"
+      - "traefik.http.services.registry-secure.loadbalancer.server.port=5000"
+      - "traefik.http.routers.registry-secure.entrypoints=websecure"
+      - "traefik.http.routers.registry-secure.tls.certresolver=http"
+      - "traefik.http.routers.registry-secure.tls=true"
+      - "traefik.http.routers.registry-secure.rule=Host(`registry.fiks.im`)"
     networks:
-      - joxit-app
       - traefik-public
-    volumes:
-      - ./registry/storage:/var/lib/registry
-      - ./registry/config.yml:/etc/docker/registry/config.yml:ro
   registry-ui:
-    image: joxit/docker-registry-ui:static
+    image: joxit/docker-registry-ui:main
     restart: always
 #    ports:
 #      - 8080:80
     environment:
-      - REGISTRY_URL=http://registry-srv:5000
+      - REGISTRY_URL=https://registry.fiks.im
       - DELETE_IMAGES=true
+      - SINGLE_REGISTRY=true
+      - REGISTRY_TITLE=Docker Registry UI
+      - DELETE_IMAGES=true
+      - SHOW_CONTENT_DIGEST=true
+      - NGINX_PROXY_PASS_URL=http://registry:5000
+      - SHOW_CATALOG_NB_TAGS=true
+      - CATALOG_MIN_BRANCHES=1
+      - CATALOG_MAX_BRANCHES=1
+      - TAGLIST_PAGE_SIZE=100
+      - REGISTRY_SECURED=false
+      - CATALOG_ELEMENTS_LIMIT=1000
     networks:
-      - joxit-app
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.joxit.rule=Host(`joxit.k.voronenko.net`)"
+      - "traefik.http.routers.joxit.rule=Host(`registry-ui.fiks.im`)"
       - "traefik.http.routers.joxit.entrypoints=web"
 
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
@@ -34,10 +65,9 @@ services:
 
       - "traefik.http.services.joxit-secure.loadbalancer.server.port=80"
       - "traefik.http.routers.joxit-secure.entrypoints=websecure"
-      - "traefik.http.routers.joxit-secure.rule=Host(`joxit.k.voronenko.net`)"
+      - "traefik.http.routers.joxit-secure.rule=Host(`registry-ui.fiks.im`)"
 #      - "traefik.http.routers.joxit-secure.middlewares=traefik-auth"
       - "traefik.http.routers.joxit-secure.tls=true"
 networks:
-  joxit-app:
   traefik-public:
     external: true
