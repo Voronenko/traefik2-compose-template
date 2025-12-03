@@ -61,14 +61,26 @@ services:
       - 8888:80
     labels:
       - "traefik.enable=true"
-#      - "traefik.http.routers.heim.rule=Host(`nextcloud.fiks.im`)"
-#      - "traefik.http.routers.heim.entrypoints=web"
+      # New v3 routers with priority
+      - "traefik.http.routers.nextcloud-v3.rule=Host(`nextcloud.fiks.im`)"
+      - "traefik.http.routers.nextcloud-v3.ruleSyntax=v3"
+      - "traefik.http.routers.nextcloud-v3.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud-v3.tls=true"
+      - "traefik.http.routers.nextcloud-v3.priority=100"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
 
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+      # New v3 secure router
+      - "traefik.http.routers.nextcloud-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud-secure-v3.rule=Host(`nextcloud.fiks.im`)"
+      - "traefik.http.routers.nextcloud-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.nextcloud-secure-v3.tls=true"
+      - "traefik.http.routers.nextcloud-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.nextcloud-secure.entrypoints=websecure"
       - "traefik.http.routers.nextcloud-secure.rule=Host(`nextcloud.fiks.im`)"
 #      - "traefik.http.routers.nextcloud-secure.middlewares=traefik-auth"

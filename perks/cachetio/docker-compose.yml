@@ -42,6 +42,13 @@ services:
 #      - MAIL_ENCRYPTION=
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.cachet-v3.rule=Host(`cachet.fiks.im`)"
+      - "traefik.http.routers.cachet-v3.ruleSyntax=v3"
+      - "traefik.http.routers.cachet-v3.entrypoints=web"
+      - "traefik.http.routers.cachet-v3.priority=100"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.cachet.rule=Host(`cachet.fiks.im`)"
       - "traefik.http.routers.cachet.entrypoints=web"
 
@@ -50,6 +57,14 @@ services:
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
       - "traefik.http.services.cachet-secure.loadbalancer.server.port=8000"
+      # New v3 secure router
+      - "traefik.http.routers.cachet-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.cachet-secure-v3.rule=Host(`cachet.fiks.im`)"
+      - "traefik.http.routers.cachet-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.cachet-secure-v3.tls=true"
+      - "traefik.http.routers.cachet-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.cachet-secure.entrypoints=websecure"
       - "traefik.http.routers.cachet-secure.rule=Host(`cachet.fiks.im`)"
 #      - "traefik.http.routers.loki-secure.middlewares=traefik-auth"

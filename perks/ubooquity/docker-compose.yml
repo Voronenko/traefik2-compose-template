@@ -21,14 +21,29 @@ services:
            traefik-public:
         labels:
           - "traefik.enable=true"
+          # New v3 routers with priority
+          - "traefik.http.routers.ubooquity-v3.rule=Host(`books.fiks.im`)"
+          - "traefik.http.routers.ubooquity-v3.ruleSyntax=v3"
+          - "traefik.http.routers.ubooquity-v3.entrypoints=web"
+          - "traefik.http.routers.ubooquity-v3.priority=100"
+          - "traefik.http.services.ubooquity.loadbalancer.server.port=2202"
+
+          # Existing v2 routers (kept as fallback)
           - "traefik.http.routers.ubooquity.rule=Host(`books.fiks.im`)"
           - "traefik.http.routers.ubooquity.entrypoints=web"
-          - "traefik.http.services.ubooquity.loadbalancer.server.port=2202"
 
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+          # New v3 secure router
+          - "traefik.http.routers.ubooquity-secure-v3.entrypoints=websecure"
+          - "traefik.http.routers.ubooquity-secure-v3.rule=Host(`books.fiks.im`)"
+          - "traefik.http.routers.ubooquity-secure-v3.ruleSyntax=v3"
+          - "traefik.http.routers.ubooquity-secure-v3.tls=true"
+          - "traefik.http.routers.ubooquity-secure-v3.priority=100"
+
+          # Existing v2 secure router
           - "traefik.http.routers.ubooquity-secure.entrypoints=websecure"
           - "traefik.http.routers.ubooquity-secure.rule=Host(`books.fiks.im`)"
 #      - "traefik.http.routers.ubooquity-secure.middlewares=traefik-auth"

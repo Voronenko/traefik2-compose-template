@@ -37,6 +37,13 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.zipkin-v3.rule=Host(`zipkin.k.voronenko.net`)"
+      - "traefik.http.routers.zipkin-v3.ruleSyntax=v3"
+      - "traefik.http.routers.zipkin-v3.entrypoints=web"
+      - "traefik.http.routers.zipkin-v3.priority=100"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.zipkin.rule=Host(`zipkin.k.voronenko.net`)"
       - "traefik.http.routers.zipkin.entrypoints=web"
 
@@ -45,6 +52,14 @@ services:
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
       - "traefik.http.services.zipkin-secure.loadbalancer.server.port=9411"
+      # New v3 secure router
+      - "traefik.http.routers.zipkin-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.zipkin-secure-v3.rule=Host(`zipkin.k.voronenko.net`)"
+      - "traefik.http.routers.zipkin-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.zipkin-secure-v3.tls=true"
+      - "traefik.http.routers.zipkin-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.zipkin-secure.entrypoints=websecure"
       - "traefik.http.routers.zipkin-secure.rule=Host(`zipkin.k.voronenko.net`)"
 #      - "traefik.http.routers.zipkin-secure.middlewares=traefik-auth"

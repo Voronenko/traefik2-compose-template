@@ -15,9 +15,16 @@ services:
     command: -config.file=/etc/loki/loki-config.yaml
     networks:
       - loki
-      - traefik-public 
+      - traefik-public
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.loki-v3.rule=Host(`loki.k.voronenko.net`)"
+      - "traefik.http.routers.loki-v3.ruleSyntax=v3"
+      - "traefik.http.routers.loki-v3.entrypoints=web"
+      - "traefik.http.routers.loki-v3.priority=100"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.loki.rule=Host(`loki.k.voronenko.net`)"
       - "traefik.http.routers.loki.entrypoints=web"
 
@@ -26,6 +33,14 @@ services:
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
       - "traefik.http.services.loki-secure.loadbalancer.server.port=3100"
+      # New v3 secure router
+      - "traefik.http.routers.loki-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.loki-secure-v3.rule=Host(`loki.k.voronenko.net`)"
+      - "traefik.http.routers.loki-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.loki-secure-v3.tls=true"
+      - "traefik.http.routers.loki-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.loki-secure.entrypoints=websecure"
       - "traefik.http.routers.loki-secure.rule=Host(`loki.k.voronenko.net`)"
 #      - "traefik.http.routers.loki-secure.middlewares=traefik-auth"

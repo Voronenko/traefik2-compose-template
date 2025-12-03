@@ -26,6 +26,13 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.jaeger-v3.rule=Host(`jaeger.k.voronenko.net`)"
+      - "traefik.http.routers.jaeger-v3.ruleSyntax=v3"
+      - "traefik.http.routers.jaeger-v3.entrypoints=web"
+      - "traefik.http.routers.jaeger-v3.priority=100"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.jaeger.rule=Host(`jaeger.k.voronenko.net`)"
       - "traefik.http.routers.jaeger.entrypoints=web"
 
@@ -34,6 +41,14 @@ services:
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
       - "traefik.http.services.jaeger-secure.loadbalancer.server.port=16686"
+      # New v3 secure router
+      - "traefik.http.routers.jaeger-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.jaeger-secure-v3.rule=Host(`jaeger.k.voronenko.net`)"
+      - "traefik.http.routers.jaeger-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.jaeger-secure-v3.tls=true"
+      - "traefik.http.routers.jaeger-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.jaeger-secure.entrypoints=websecure"
       - "traefik.http.routers.jaeger-secure.rule=Host(`jaeger.k.voronenko.net`)"
 #      - "traefik.http.routers.jaeger-secure.middlewares=traefik-auth"

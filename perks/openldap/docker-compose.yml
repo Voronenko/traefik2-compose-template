@@ -57,15 +57,29 @@ services:
       PHPLDAPADMIN_HTTPS: "false"
     labels:
        - "traefik.enable=true"
+       # New v3 routers with priority
+       - "traefik.http.routers.openldap-v3.rule=Host(`ldap.fiks.im`)"
+       - "traefik.http.routers.openldap-v3.ruleSyntax=v3"
+       - "traefik.http.routers.openldap-v3.entrypoints=web"
+       - "traefik.http.routers.openldap-v3.priority=100"
+       - "traefik.http.services.openldap.loadbalancer.server.port=80"
+
+       # Existing v2 routers (kept as fallback)
        - "traefik.http.routers.openldap.rule=Host(`ldap.fiks.im`)"
        - "traefik.http.routers.openldap.entrypoints=web"
-
-       - "traefik.http.services.openldap.loadbalancer.server.port=80"
 
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+       # New v3 secure router
+       - "traefik.http.routers.openldap-secure-v3.entrypoints=websecure"
+       - "traefik.http.routers.openldap-secure-v3.rule=Host(`ldap.fiks.im`)"
+       - "traefik.http.routers.openldap-secure-v3.ruleSyntax=v3"
+       - "traefik.http.routers.openldap-secure-v3.tls=true"
+       - "traefik.http.routers.openldap-secure-v3.priority=100"
+
+       # Existing v2 secure router
        - "traefik.http.routers.openldap-secure.entrypoints=websecure"
        - "traefik.http.routers.openldap-secure.rule=Host(`ldap.fiks.im`)"
 #      - "traefik.http.routers.openldap-secure.middlewares=traefik-auth"

@@ -31,14 +31,29 @@ services:
       - host.docker.internal:host-gateway
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.ollama-v3.rule=Host(`llmd.voronenko.net`,`llmd.voronenko.net`,`llmd.fiks.im`)"
+      - "traefik.http.routers.ollama-v3.ruleSyntax=v3"
+      - "traefik.http.routers.ollama-v3.entrypoints=web"
+      - "traefik.http.routers.ollama-v3.priority=100"
+      - "traefik.http.services.llm.loadbalancer.server.port=8080"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.ollama.rule=Host(`llmd.voronenko.net`,`llmd.voronenko.net`,`llmd.fiks.im`)"
       - "traefik.http.routers.llm.entrypoints=web"
-      - "traefik.http.services.llm.loadbalancer.server.port=8080"
 
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+      # New v3 secure router
+      - "traefik.http.routers.llm-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.llm-secure-v3.rule=Host(`llmd.voronenko.net`,`llmd.voronenko.net`,`llmd.fiks.im`)"
+      - "traefik.http.routers.llm-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.llm-secure-v3.tls=true"
+      - "traefik.http.routers.llm-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.llm-secure.entrypoints=websecure"
       - "traefik.http.routers.llm-secure.rule=Host(`llmd.voronenko.net`,`llmd.voronenko.net`,`llmd.fiks.im`)"
 #      - "traefik.http.routers.llm-secure.middlewares=traefik-auth"

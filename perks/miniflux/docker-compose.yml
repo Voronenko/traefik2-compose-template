@@ -17,12 +17,29 @@ services:
       test: ["CMD", "/usr/bin/miniflux", "-healthcheck", "auto"]
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.miniflux-v3.rule=Host(`flux.fiks.im`)"
+      - "traefik.http.routers.miniflux-v3.ruleSyntax=v3"
+      - "traefik.http.routers.miniflux-v3.entrypoints=web"
+      - "traefik.http.routers.miniflux-v3.priority=100"
+      - "traefik.http.services.miniflux.loadbalancer.server.port=8080"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.miniflux.rule=Host(`flux.fiks.im`)"
       - "traefik.http.routers.miniflux.entrypoints=web"
-      - "traefik.http.services.miniflux.loadbalancer.server.port=8080"
+
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+      # New v3 secure router
+      - "traefik.http.routers.miniflux-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.miniflux-secure-v3.rule=Host(`flux.fiks.im`)"
+      - "traefik.http.routers.miniflux-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.miniflux-secure-v3.tls=true"
+      - "traefik.http.routers.miniflux-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.miniflux-secure.entrypoints=websecure"
       - "traefik.http.routers.miniflux-secure.rule=Host(`flux.fiks.im`)"
 #      - "traefik.http.routers.miniflux-secure.middlewares=traefik-auth"

@@ -12,14 +12,29 @@ services:
         clickhouse: 172.19.0.1
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.tabix-v3.rule=Host(`tabix.lvh.voronenko.net`)"
+      - "traefik.http.routers.tabix-v3.ruleSyntax=v3"
+      - "traefik.http.routers.tabix-v3.entrypoints=web"
+      - "traefik.http.routers.tabix-v3.priority=100"
+      - "traefik.http.services.tabix.loadbalancer.server.port=80"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.tabix.rule=Host(`tabix.lvh.voronenko.net`)"
       - "traefik.http.routers.tabix.entrypoints=web"
-      - "traefik.http.services.tabix.loadbalancer.server.port=80"
 
 #      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+      # New v3 secure router
+      - "traefik.http.routers.tabix-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.tabix-secure-v3.rule=Host(`tabix.lvh.voronenko.net`)"
+      - "traefik.http.routers.tabix-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.tabix-secure-v3.tls=true"
+      - "traefik.http.routers.tabix-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.tabix-secure.entrypoints=websecure"
       - "traefik.http.routers.tabix-secure.rule=Host(`tabix.lvh.voronenko.net`)"
 #      - "traefik.http.routers.heim-secure.middlewares=traefik-auth"

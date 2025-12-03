@@ -17,18 +17,31 @@ services:
     - nexus-data:/nexus-data
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority for nexus
+      - "traefik.http.routers.nexus-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.nexus-secure-v3.rule=Host(`nexus.fiks.im`)"
+      - "traefik.http.routers.nexus-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.nexus-secure-v3.tls=true"
+      - "traefik.http.routers.nexus-secure-v3.priority=100"
       - "traefik.http.services.nexus-secure.loadbalancer.server.port=8081"
       - "traefik.http.routers.nexus-secure.service=nexus-secure"
       - "traefik.http.routers.nexus-secure.entrypoints=websecure"
       - "traefik.http.routers.nexus-secure.rule=Host(`nexus.fiks.im`)"
       - "traefik.http.routers.nexus-secure.tls=true"
      # Registry Endpoint
+      # New v3 routers with priority for registry
+      - "traefik.http.routers.nexusregistry-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.nexusregistry-secure-v3.rule=Host(`registry.fiks.im`)"
+      - "traefik.http.routers.nexusregistry-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.nexusregistry-secure-v3.tls=true"
+      - "traefik.http.routers.nexusregistry-secure-v3.priority=100"
       - "traefik.http.services.nexusregistry-secure.loadbalancer.server.port=5000"
       - "traefik.http.routers.nexusregistry-secure.service=nexusregistry-secure"
       - "traefik.http.routers.nexusregistry-secure.entrypoints=websecure"
       - "traefik.http.routers.nexusregistry-secure.rule=Host(`registry.fiks.im`)"
       - "traefik.http.routers.nexusregistry-secure.tls=true"
 
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.services.nexusregistry.loadbalancer.server.port=5000"
       - "traefik.http.routers.nexusregistry.service=nexusregistry"
       - "traefik.http.routers.nexusregistry.entrypoints=web"

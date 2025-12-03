@@ -2,6 +2,14 @@ version: "3.7"
 x-sonarqube-labels: &sonarqube-labels
   labels:
     - "traefik.enable=true"
+    # New v3 routers with priority
+    - "traefik.http.routers.sonar-v3.rule=Host(`sonar.lvh.voronenko.net`)"
+    - "traefik.http.routers.sonar-v3.ruleSyntax=v3"
+    - "traefik.http.routers.sonar-v3.entrypoints=websecure"
+    - "traefik.http.routers.sonar-v3.tls=true"
+    - "traefik.http.routers.sonar-v3.priority=100"
+
+    # Existing v2 routers (kept as fallback)
     - "traefik.http.services.sonar.loadbalancer.server.port=9000"
     - "traefik.http.routers.sonar.entrypoints=websecure"
     - "traefik.http.routers.sonar.rule=Host(`sonar.lvh.voronenko.net`)"

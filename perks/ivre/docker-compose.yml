@@ -18,6 +18,13 @@ services:
         - traefik-public
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.ivre-v3.rule=Host(`sec.lvh.voronenko.net`)"
+      - "traefik.http.routers.ivre-v3.ruleSyntax=v3"
+      - "traefik.http.routers.ivre-v3.entrypoints=web"
+      - "traefik.http.routers.ivre-v3.priority=100"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.ivre.rule=Host(`sec.lvh.voronenko.net`)"
       - "traefik.http.routers.ivre.entrypoints=web"
 
@@ -25,6 +32,14 @@ services:
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+      # New v3 secure router
+      - "traefik.http.routers.ivre-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.ivre-secure-v3.rule=Host(`sec.lvh.voronenko.net`)"
+      - "traefik.http.routers.ivre-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.ivre-secure-v3.tls=true"
+      - "traefik.http.routers.ivre-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.ivre-secure.entrypoints=websecure"
       - "traefik.http.routers.ivre-secure.rule=Host(`sec.lvh.voronenko.net`)"
 #      - "traefik.http.routers.grafana-secure.middlewares=traefik-auth"

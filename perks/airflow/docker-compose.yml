@@ -133,6 +133,13 @@ services:
       - traefik-public
     labels:
        - "traefik.enable=true"
+       # New v3 routers with priority
+       - "traefik.http.routers.airflow-web-v3.rule=Host(`airflow.fiks.im`)"
+       - "traefik.http.routers.airflow-web-v3.ruleSyntax=v3"
+       - "traefik.http.routers.airflow-web-v3.entrypoints=web"
+       - "traefik.http.routers.airflow-web-v3.priority=100"
+
+       # Existing v2 routers (kept as fallback)
        - "traefik.http.routers.airflow-web.rule=Host(`airflow.fiks.im`)"
        - "traefik.http.routers.airflow-web.entrypoints=web"
 
@@ -142,6 +149,14 @@ services:
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+       # New v3 secure router
+       - "traefik.http.routers.airflow-web-secure-v3.entrypoints=websecure"
+       - "traefik.http.routers.airflow-web-secure-v3.rule=Host(`airflow.fiks.im`)"
+       - "traefik.http.routers.airflow-web-secure-v3.ruleSyntax=v3"
+       - "traefik.http.routers.airflow-web-secure-v3.tls=true"
+       - "traefik.http.routers.airflow-web-secure-v3.priority=100"
+
+       # Existing v2 secure router
        - "traefik.http.routers.airflow-web-secure.entrypoints=websecure"
        - "traefik.http.routers.airflow-web-secure.rule=Host(`airflow.fiks.im`)"
 #      - "traefik.http.routers.airflow-web-secure.middlewares=traefik-auth"
@@ -315,6 +330,13 @@ services:
     restart: always
     labels:
        - "traefik.enable=true"
+       # New v3 routers with priority
+       - "traefik.http.routers.airflow-web-v3.rule=Host(`airflow-flower.fiks.im`)"
+       - "traefik.http.routers.airflow-web-v3.ruleSyntax=v3"
+       - "traefik.http.routers.airflow-web-v3.entrypoints=web"
+       - "traefik.http.routers.airflow-web-v3.priority=100"
+
+       # Existing v2 routers (kept as fallback)
        - "traefik.http.routers.airflow-web.rule=Host(`airflow-flower.fiks.im`)"
        - "traefik.http.routers.airflow-web.entrypoints=web"
 
@@ -324,6 +346,14 @@ services:
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+       # New v3 secure router
+       - "traefik.http.routers.airflow-web-secure-v3.entrypoints=websecure"
+       - "traefik.http.routers.airflow-web-secure-v3.rule=Host(`airflow-flower.fiks.im`)"
+       - "traefik.http.routers.airflow-web-secure-v3.ruleSyntax=v3"
+       - "traefik.http.routers.airflow-web-secure-v3.tls=true"
+       - "traefik.http.routers.airflow-web-secure-v3.priority=100"
+
+       # Existing v2 secure router
        - "traefik.http.routers.airflow-web-secure.entrypoints=websecure"
        - "traefik.http.routers.airflow-web-secure.rule=Host(`airflow-flower.fiks.im`)"
 #      - "traefik.http.routers.airflow-web-secure.middlewares=traefik-auth"

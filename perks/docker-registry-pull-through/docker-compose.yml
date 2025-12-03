@@ -28,15 +28,31 @@ services:
       labels:
         - "traefik.port=5000"
         - "traefik.enable=true"
+        # New v3 routers with priority
+        - "traefik.http.routers.registry-v3.rule=Host(`registry.lvh.voronenko.net`)"
+        - "traefik.http.routers.registry-v3.ruleSyntax=v3"
+        - "traefik.http.routers.registry-v3.entrypoints=web"
+        - "traefik.http.routers.registry-v3.priority=100"
+
+        # Existing v2 routers (kept as fallback)
         - "traefik.http.routers.registry.rule=Host(`registry.lvh.voronenko.net`)"
         - "traefik.http.routers.registry.entrypoints=web"
-#        - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
-#        - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
-#        - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+  #        - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
+  #        - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+  #        - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+
+        # New v3 secure router
+        - "traefik.http.routers.registry-secure-v3.entrypoints=websecure"
+        - "traefik.http.routers.registry-secure-v3.rule=Host(`registry.lvh.voronenko.net`)"
+        - "traefik.http.routers.registry-secure-v3.ruleSyntax=v3"
+        - "traefik.http.routers.registry-secure-v3.tls=true"
+        - "traefik.http.routers.registry-secure-v3.priority=100"
+
+        # Existing v2 secure router
         - "traefik.http.services.registry-secure.loadbalancer.server.port=80"
         - "traefik.http.routers.registry-secure.entrypoints=websecure"
         - "traefik.http.routers.registry-secure.rule=Host(`registry.lvh.voronenko.net`)"
-#        - "traefik.http.routers.registry-secure.middlewares=traefik-auth"
+  #        - "traefik.http.routers.registry-secure.middlewares=traefik-auth"
         - "traefik.http.routers.registry-secure.tls=true"
     labels:
       - "traefik.port=5000"
@@ -68,6 +84,13 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.joxit-v3.rule=Host(`registry-ui.lvh.voronenko.net`)"
+      - "traefik.http.routers.joxit-v3.ruleSyntax=v3"
+      - "traefik.http.routers.joxit-v3.entrypoints=web"
+      - "traefik.http.routers.joxit-v3.priority=100"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.joxit.rule=Host(`registry-ui.lvh.voronenko.net`)"
       - "traefik.http.routers.joxit.entrypoints=web"
 
@@ -75,6 +98,14 @@ services:
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+      # New v3 secure router
+      - "traefik.http.routers.joxit-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.joxit-secure-v3.rule=Host(`registry-ui.lvh.voronenko.net`)"
+      - "traefik.http.routers.joxit-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.joxit-secure-v3.tls=true"
+      - "traefik.http.routers.joxit-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.services.joxit-secure.loadbalancer.server.port=80"
       - "traefik.http.routers.joxit-secure.entrypoints=websecure"
       - "traefik.http.routers.joxit-secure.rule=Host(`registry-ui.lvh.voronenko.net`)"

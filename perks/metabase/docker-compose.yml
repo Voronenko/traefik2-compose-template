@@ -16,7 +16,6 @@ services:
       MYSQL_PASSWORD: metabase
   metabase-app:
     image: softasap/metabase:202309141500
-    restart: unless-stopped
 #    ports:
 #      - 3001:3000
     volumes:
@@ -26,7 +25,6 @@ services:
     networks:
       - metabase
       - traefik-public
-    restart: unless-stopped
     environment:
       MB_DB_TYPE: mysql
       MB_DB_DBNAME: metabase
@@ -40,6 +38,13 @@ services:
       - metabase-db
     labels:
       - "traefik.enable=true"
+      # New v3 routers with priority
+      - "traefik.http.routers.metabase-v3.rule=Host(`mb.lvh.voronenko.net`)"
+      - "traefik.http.routers.metabase-v3.ruleSyntax=v3"
+      - "traefik.http.routers.metabase-v3.entrypoints=web"
+      - "traefik.http.routers.metabase-v3.priority=100"
+
+      # Existing v2 routers (kept as fallback)
       - "traefik.http.routers.metabase.rule=Host(`mb.lvh.voronenko.net`)"
       - "traefik.http.routers.metabase.entrypoints=web"
 
@@ -47,6 +52,14 @@ services:
 #      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
 #      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
 
+      # New v3 secure router
+      - "traefik.http.routers.metabase-secure-v3.entrypoints=websecure"
+      - "traefik.http.routers.metabase-secure-v3.rule=Host(`mb.lvh.voronenko.net`)"
+      - "traefik.http.routers.metabase-secure-v3.ruleSyntax=v3"
+      - "traefik.http.routers.metabase-secure-v3.tls=true"
+      - "traefik.http.routers.metabase-secure-v3.priority=100"
+
+      # Existing v2 secure router
       - "traefik.http.routers.metabase-secure.entrypoints=websecure"
       - "traefik.http.routers.metabase-secure.rule=Host(`mb.lvh.voronenko.net`)"
 #      - "traefik.http.routers.metabase-secure.middlewares=traefik-auth"
