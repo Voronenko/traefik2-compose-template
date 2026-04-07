@@ -1,61 +1,61 @@
-version: '3.7'
 services:
-  jaeger:
-    image: jaegertracing/all-in-one:latest
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml
     ports:
-# 5775    UDP     agent   accept zipkin.thrift over compact thrift protocol (deprecated, used by legacy clients only)
-      - "5775:5775/udp"
-# 6831    UDP     agent   accept jaeger.thrift over compact thrift protocol
-      - "6831:6831/udp"
-# 6832    UDP     agent   accept jaeger.thrift over binary thrift protocol
-      - "6832:6832/udp"
-# 5778    HTTP    agent   serve configs
-      - "5778:5778"
-# 16686   HTTP    query   serve frontend
-      - "16686:16686"
-# 14268   HTTP    collector       accept jaeger.thrift directly from clients
-      - "14268:14268"
-# 14250   HTTP    collector       accept model.proto
-      - "14250:14250"
-# 9411    HTTP    collector       Zipkin compatible endpoint (optional)
-      - "9411:9411"
-    environment:
-      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger
     networks:
-      - jaeger-app
+      - otel_jaeger
+
+  jaeger:
+    image: jaegertracing/jaeger:latest
+    container_name: jaeger
+    volumes:
+      - ./jaeger-data:/jaeger_storage
+      - ./jaeger-config.yaml:/etc/jaeger/config.yaml
+    command: ["--config=/etc/jaeger/config.yaml"]
+    expose:
+      - "16686"   # HTTP UI
+      - "16685"   # gRPC API
+      - "14250"   # Jaeger gRPC ingest
+      - "4317"    # OTLP gRPC (internal, from otel-collector)
+      - "4318"    # OTLP HTTP (internal, from otel-collector)
+      - "8888"    # Prometheus metrics
+    ports:
+      - "16686:16686"
+      - "16685:16685"
+      - "14250:14250"
+      - "8888:8888"
+    networks:
+      - otel_jaeger
       - traefik-public
     labels:
       - "traefik.enable=true"
-      # New v3 routers with priority
-      - "traefik.http.routers.jaeger-v3.rule=Host(`jaeger.k.voronenko.net`)"
-      - "traefik.http.routers.jaeger-v3.ruleSyntax=v3"
-      - "traefik.http.routers.jaeger-v3.entrypoints=web"
-      - "traefik.http.routers.jaeger-v3.priority=100"
 
-      # Existing v2 routers (kept as fallback)
-      - "traefik.http.routers.jaeger.rule=Host(`jaeger.k.voronenko.net`)"
+      # HTTP
+      - "traefik.http.routers.jaeger.rule=Host(`jaeger.fiks.im`)"
       - "traefik.http.routers.jaeger.entrypoints=web"
+      - "traefik.http.routers.jaeger.service=jaeger"
 
-#      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:PASSWORD"
-#      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
-#      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
-
-      - "traefik.http.services.jaeger-secure.loadbalancer.server.port=16686"
-      # New v3 secure router
-      - "traefik.http.routers.jaeger-secure-v3.entrypoints=websecure"
-      - "traefik.http.routers.jaeger-secure-v3.rule=Host(`jaeger.k.voronenko.net`)"
-      - "traefik.http.routers.jaeger-secure-v3.ruleSyntax=v3"
-      - "traefik.http.routers.jaeger-secure-v3.tls=true"
-      - "traefik.http.routers.jaeger-secure-v3.priority=100"
-
-      # Existing v2 secure router
+      # HTTPS
+      - "traefik.http.routers.jaeger-secure.rule=Host(`jaeger.fiks.im`)"
       - "traefik.http.routers.jaeger-secure.entrypoints=websecure"
-      - "traefik.http.routers.jaeger-secure.rule=Host(`jaeger.k.voronenko.net`)"
-#      - "traefik.http.routers.jaeger-secure.middlewares=traefik-auth"
       - "traefik.http.routers.jaeger-secure.tls=true"
+      - "traefik.http.routers.jaeger-secure.service=jaeger"
+
+      # Service
+      - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
+
+    restart: unless-stopped
 
 networks:
-  jaeger-app:
+  otel_jaeger:
+    driver: bridge
   traefik-public:
     external: true
-
