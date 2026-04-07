@@ -8,10 +8,14 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
+    expose:
+      - "13133"   # Healthcheck (for external monitoring)
     depends_on:
       - jaeger
     networks:
       - otel_jaeger
+    # Note: otel-collector uses distroless image without shell, healthcheck via external monitoring recommended
+    # curl http://localhost:13133/ from host or use monitoring system
 
   jaeger:
     image: jaegertracing/jaeger:latest
@@ -27,6 +31,7 @@ services:
       - "4317"    # OTLP gRPC (internal, from otel-collector)
       - "4318"    # OTLP HTTP (internal, from otel-collector)
       - "8888"    # Prometheus metrics
+      - "13133"   # Healthcheck /status
     ports:
       - "16686:16686"
       - "16685:16685"
@@ -51,6 +56,13 @@ services:
 
       # Service
       - "traefik.http.services.jaeger.loadbalancer.server.port=16686"
+
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "nc -z 127.0.0.1 13133 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
     restart: unless-stopped
 
