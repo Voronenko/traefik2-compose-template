@@ -1,0 +1,127 @@
+services:
+  kuma_db:
+    image: mariadb:11
+    container_name: kuma_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: kuma_root
+      MYSQL_DATABASE: kuma
+      MYSQL_USER: kuma
+      MYSQL_PASSWORD: kuma
+      TZ: CEST
+    volumes:
+      - ./data/mariadb:/var/lib/mysql
+    networks:
+      - kuma_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    container_name: uptime-kuma
+    restart: always
+
+    # Optional: expose locally too
+    # Remove if you want Traefik-only access
+    #ports:
+    #  - "3001:3001"
+    #  - "3306:3306"
+
+    volumes:
+      - ./kuma_data/:/app/data
+
+    environment:
+      TZ: CEST
+      UMASK: "0022"
+      DB_TYPE: mysql
+      DB_HOST: kuma_db
+      DB_PORT: 3306
+      DB_NAME: kuma
+      DB_USER: kuma
+      DB_PASSWORD: kuma
+
+    depends_on:
+      kuma_db:
+        condition: service_healthy
+
+    networks:
+      - kuma_network
+      - traefik-public
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 5s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    labels:
+      - traefik.enable=true
+
+      # Router
+      - traefik.http.routers.kuma.rule=Host(`kuma.fiks.im`)
+      - traefik.http.routers.kuma.entrypoints=websecure
+      - traefik.http.routers.kuma.tls=true
+
+      # Optional: certresolver if using Let's Encrypt
+      # - traefik.http.routers.kuma.tls.certresolver=letsencrypt
+
+      # Service
+      - traefik.http.services.kuma.loadbalancer.server.port=3001
+
+      # Optional websocket support headers
+      - traefik.http.middlewares.kuma-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.routers.kuma.middlewares=kuma-headers
+
+  kuma_backup:
+    image: tiredofit/db-backup:latest
+    container_name: kuma_backup
+    restart: always
+    environment:
+      TZ: CEST
+      # Backup job configuration
+      DB01_TYPE: mysql
+      DB01_HOST: kuma_db
+      DB01_NAME: kuma
+      DB01_USER: kuma
+      DB01_PASS: kuma
+      DB01_PORT: 3306
+
+      # Schedule: weekly on Friday at 7 PM (19:00)
+      DB01_BACKUP_BEGIN: "0 19 * * 5"
+
+      # Compression (ZSTD with level 3)
+      DB01_COMPRESSION: ZSTD
+      DB01_COMPRESSION_LEVEL: "3"
+
+      # Retention: keep 3 most recent backups
+      DB01_CLEANUP_COUNT: "3"
+
+      # Checksum
+      DB01_CHECKSUM: SHA1
+
+      # Backup location
+      DB01_FILESYSTEM_PATH: /backup
+    volumes:
+      - ./data/backups:/backup
+    networks:
+      - kuma_network
+    depends_on:
+      kuma_db:
+        condition: service_healthy
+
+networks:
+  kuma_network:
+    driver: bridge
+
+  traefik-public:
+    external: true
